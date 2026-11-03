@@ -431,7 +431,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen ${theme === "dark" ? "dark" : ""} bg-neutral-50 dark:bg-neutral-950 flex flex-col font-sans overflow-x-hidden selection:bg-neutral-900 selection:text-white dark:selection:bg-white dark:selection:text-neutral-900 transition-colors duration-150 lg:h-screen lg:overflow-hidden`}>
+    <div className={`min-h-screen ${theme === "dark" ? "dark" : ""} bg-neutral-50 dark:bg-neutral-950 flex flex-col font-sans overflow-x-hidden selection:bg-neutral-900 selection:text-white dark:selection:bg-white dark:selection:text-neutral-900 transition-colors duration-150`}>
       
       {/* Geometric Balance - Header Block */}
       <header className="relative h-20 border-b border-neutral-900/10 dark:border-neutral-800 flex items-center justify-between px-6 sm:px-12 bg-white dark:bg-neutral-950 sticky top-0 lg:static z-40 flex-shrink-0 transition-colors">
@@ -478,8 +478,10 @@ export default function App() {
         </div>
         
         {/* Navigation Items (Thematic Styling) */}
-        <nav className="hidden md:flex gap-8 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest">
-          <a href="#" className="text-neutral-900 dark:text-white border-b-2 border-neutral-900 dark:border-white pb-1">Generator</a>
+        <nav aria-label="Primary" className="hidden md:flex gap-8 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest">
+          <a href="#generator" className="text-neutral-900 dark:text-white border-b-2 border-neutral-900 dark:border-white pb-1">Generator</a>
+          <a href="#features" className="hover:text-neutral-900 dark:hover:text-white pb-1">Features</a>
+          <a href="#faq" className="hover:text-neutral-900 dark:hover:text-white pb-1">FAQ</a>
         </nav>
 
         <div className="flex items-center gap-3 sm:gap-4">
@@ -545,25 +547,31 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Workspace Split Layout */}
-      <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden min-h-0">
+      {/* Main Workspace Split Layout — locked to the space between the header
+          (h-20) and status bar (h-14) on desktop so panels scroll internally;
+          SEO content sections follow below the fold. */}
+      <div className="flex flex-col lg:flex-row lg:overflow-hidden min-h-0 lg:h-[calc(100vh_-_8.5rem)]">
         
         {/* Left Side: Parameters Panel */}
         <main
           ref={leftPanelRef}
-          className="w-full lg:w-1/2 border-r border-neutral-900/10 dark:border-neutral-800 p-6 sm:p-12 lg:p-12 xl:p-16 flex flex-col justify-start bg-white dark:bg-neutral-900 transition-colors lg:h-full lg:overflow-y-auto custom-scrollbar"
+          id="generator"
+          aria-label="QR code generator"
+          className="w-full lg:w-1/2 border-r border-neutral-900/10 dark:border-neutral-800 p-6 sm:p-12 lg:p-12 xl:p-16 flex flex-col justify-start bg-white dark:bg-neutral-900 transition-colors lg:h-full lg:overflow-y-auto custom-scrollbar scroll-mt-20"
         >
           <div className="max-w-xl w-full mx-auto pb-12 lg:pb-16">
             
             {/* Title / Hero section strictly following theme design */}
             <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 block">
-              INSTANT PATTERN VECTOR
+              Free · Instant · No Sign-up
             </span>
             <h1 className="text-4xl sm:text-5xl font-black text-neutral-900 dark:text-white leading-none mb-4 uppercase tracking-tighter italic font-display">
-              Instant<br />Resolution.
+              Free QR Code<br />Generator
             </h1>
             <p className="text-neutral-500 dark:text-neutral-400 mb-10 leading-relaxed text-sm sm:text-base">
-              Convert any destination URL into a high-fidelity vector QR pattern. Engineered for ultimate scan reliability and absolute geometric precision.
+              Turn any link into a scannable QR code in seconds. Customize colors, size and error
+              correction, add your logo, then download a print-ready PNG up to 3000&nbsp;×&nbsp;3000&nbsp;px.
+              Free and private — everything is generated locally in your browser.
             </p>
 
             {/* Input & Form Area */}
@@ -864,7 +872,7 @@ export default function App() {
                       >
                         <img
                           src={qrDataUrl}
-                          alt="QR Vector"
+                          alt={`QR code for ${url.trim()}`}
                           className="max-h-full max-w-full object-contain p-1 select-none"
                           referrerPolicy="no-referrer"
                         />
@@ -1004,6 +1012,200 @@ export default function App() {
           <span>Standard: ISO/IEC 18004</span>
           <span>License: Open // Stable</span>
         </div>
+      </footer>
+
+      {/* ==================================================================
+          Below-the-fold content — crawlable copy that targets search queries
+          like "free QR code generator", "create QR code for website",
+          "custom QR code with logo". Keep the FAQ here in sync with the
+          FAQPage JSON-LD in index.html.
+          ================================================================== */}
+      <div className="border-t border-neutral-900/10 dark:border-neutral-800 bg-white dark:bg-neutral-950">
+        <div className="max-w-6xl mx-auto px-6 sm:px-12 py-16 sm:py-24 space-y-20 sm:space-y-28">
+
+          {/* Feature grid */}
+          <section id="features" aria-labelledby="features-heading" className="scroll-mt-24">
+            <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 block">
+              Built for scan reliability
+            </span>
+            <h2
+              id="features-heading"
+              className="text-3xl sm:text-4xl font-black uppercase italic font-display tracking-tight text-neutral-900 dark:text-white mb-4"
+            >
+              Everything a QR code maker should be
+            </h2>
+            <p className="text-neutral-500 dark:text-neutral-400 max-w-2xl leading-relaxed mb-10 text-sm sm:text-base">
+              HK QR is a free online QR code generator for websites, landing pages, social profiles
+              and print campaigns. Paste a link, style your code, and export a crisp, scannable PNG —
+              no account, no watermark, no upload.
+            </p>
+
+            <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 list-none p-0">
+              {[
+                {
+                  id: "01",
+                  title: "High-resolution PNG export",
+                  body: "Four export sizes from 350px for the web up to 3000 × 3000 px for posters and billboards, rendered sharply at full resolution.",
+                },
+                {
+                  id: "02",
+                  title: "Full color control",
+                  body: "Six foreground presets, four background presets and a custom color picker for both layers — match your brand and keep the code scannable.",
+                },
+                {
+                  id: "03",
+                  title: "Logos & center icons",
+                  body: "Drop your own image in the center or pick a preset badge. Error correction automatically switches to level H so the code stays readable.",
+                },
+                {
+                  id: "04",
+                  title: "Scan reliability",
+                  body: "Switch between error correction levels L, M, Q and H (7%–30% redundancy) and let the ISO/IEC 18004 encoder do the rest.",
+                },
+                {
+                  id: "05",
+                  title: "Free & unlimited",
+                  body: "No signup, no watermarks, no generation limits. Create as many QR codes as you need, as often as you need.",
+                },
+                {
+                  id: "06",
+                  title: "Private by design",
+                  body: "Codes are generated entirely in your browser. Recent codes stay in local storage and can be cleared with one click.",
+                },
+              ].map((feature) => (
+                <li
+                  key={feature.id}
+                  className="border-2 border-neutral-900 dark:border-neutral-100 bg-white dark:bg-neutral-900 p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.7)]"
+                >
+                  <span className="block text-[10px] font-mono font-bold text-neutral-400 dark:text-neutral-500 tracking-widest mb-3">
+                    {feature.id} //
+                  </span>
+                  <h3 className="text-sm font-black uppercase tracking-wide text-neutral-900 dark:text-white mb-2 font-display">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                    {feature.body}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {/* How-to steps */}
+          <section id="how-it-works" aria-labelledby="how-it-works-heading" className="scroll-mt-24">
+            <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 block">
+              Three steps, ten seconds
+            </span>
+            <h2
+              id="how-it-works-heading"
+              className="text-3xl sm:text-4xl font-black uppercase italic font-display tracking-tight text-neutral-900 dark:text-white mb-10"
+            >
+              How to make a QR code
+            </h2>
+
+            <ol className="grid sm:grid-cols-3 gap-6 list-none p-0 m-0">
+              {[
+                {
+                  step: "01",
+                  title: "Paste your link",
+                  body: "Enter any destination URL in the Source Destination URL field. Leave off the protocol and https:// is added automatically.",
+                },
+                {
+                  step: "02",
+                  title: "Customize your code",
+                  body: "Pick colors, export size and error correction level, then add a center logo or preset icon if you want.",
+                },
+                {
+                  step: "03",
+                  title: "Download or share",
+                  body: "Save a print-ready PNG, copy the code to your clipboard, or share it straight from your device.",
+                },
+              ].map((item) => (
+                <li key={item.step} className="border-t-2 border-neutral-900 dark:border-neutral-100 pt-5">
+                  <span className="block text-4xl font-black italic font-display text-neutral-900 dark:text-white leading-none mb-3">
+                    {item.step}
+                  </span>
+                  <h3 className="text-sm font-black uppercase tracking-wide text-neutral-900 dark:text-white mb-2 font-display">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                    {item.body}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          {/* FAQ — keep in sync with FAQPage JSON-LD in index.html */}
+          <section id="faq" aria-labelledby="faq-heading" className="scroll-mt-24">
+            <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 block">
+              Answers
+            </span>
+            <h2
+              id="faq-heading"
+              className="text-3xl sm:text-4xl font-black uppercase italic font-display tracking-tight text-neutral-900 dark:text-white mb-8"
+            >
+              QR code generator FAQ
+            </h2>
+
+            <div className="sm:grid sm:grid-cols-2 sm:gap-x-12">
+              {[
+                {
+                  q: "How do I make a QR code for my website?",
+                  a: "Paste your website URL into the Source Destination URL field, adjust colors, size and error correction if you want, then hit Download. Your QR code is generated instantly as a print-ready PNG.",
+                },
+                {
+                  q: "Are these QR codes free?",
+                  a: "Yes. HK QR is free with no signup, no watermarks and no limit on how many codes you generate.",
+                },
+                {
+                  q: "Can I customize QR code colors and add a logo?",
+                  a: "Yes. Choose from preset foreground and background colors or pick any custom color, and place a preset icon or your own uploaded image in the center. When a logo is enabled, error correction is automatically raised to level H so the code still scans.",
+                },
+                {
+                  q: "What size should a QR code be?",
+                  a: "For print, keep the code at least 2–3 cm (about 1 inch) wide, and larger for posters or billboards. For screens, 350px is enough for web use. The generator offers Small Print, Medium Card, Large Poster and Ultra Crisp presets up to 3000 × 3000 px.",
+                },
+                {
+                  q: "Do QR codes expire?",
+                  a: "No. These are static QR codes encoded directly into the image, so they never expire and work without an internet connection on the scanning side. They always point to the URL you encoded.",
+                },
+                {
+                  q: "Is my data stored anywhere?",
+                  a: "No. QR codes are generated entirely in your browser. Recent codes are kept only in your browser's local storage and can be cleared at any time from the History panel.",
+                },
+              ].map((item) => (
+                <div key={item.q} className="py-5 border-t border-neutral-900/10 dark:border-neutral-800">
+                  <h3 className="text-sm sm:text-base font-bold text-neutral-900 dark:text-white mb-1.5">
+                    {item.q}
+                  </h3>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                    {item.a}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      {/* Site footer */}
+      <footer
+        aria-label="Site footer"
+        className="border-t border-neutral-900/10 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 px-6 sm:px-12 py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] font-mono uppercase tracking-widest text-neutral-400 dark:text-neutral-500 transition-colors"
+      >
+        <div className="flex items-center gap-2.5">
+          <span aria-hidden="true" className="w-3 h-3 border-2 border-neutral-900 dark:border-white inline-block" />
+          <span>© {new Date().getFullYear()} HK QR // Free QR code generator</span>
+        </div>
+        <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+          <a href="#generator" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Generator</a>
+          <a href="#features" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Features</a>
+          <a href="#how-it-works" className="hover:text-neutral-900 dark:hover:text-white transition-colors">How-to</a>
+          <a href="#faq" className="hover:text-neutral-900 dark:hover:text-white transition-colors">FAQ</a>
+          <span>Generated locally // No tracking</span>
+        </nav>
       </footer>
 
       {/* History Slide-over Sidebar */}

@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Google Fonts are loaded in index.html with <link rel="stylesheet"> +
+   preconnect — a CSS @import here would block first paint. */
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));

@@ -1,0 +1,14 @@
+# HK QR – Free QR Code Generator
+# https://example.com/  (replace with your production URL before deploying)
+
+User-agent: *
+Allow: /
+
+# AI Overviews / AI crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://example.com/sitemap.xml
