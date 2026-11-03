@@ -1,0 +1,6 @@
+{
+  "name": "HK QR",
+  "description": "A fast and precise tool to generate, customize with personalized center icons or uploaded logos, and download or share vector QR codes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
