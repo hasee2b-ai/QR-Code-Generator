@@ -93,13 +93,13 @@ A fast, private, browser-only QR code generator. Paste a link, style the code, a
 ```text
 qr/
 ├── index.html                     # HTML shell, meta tags, OG/Twitter cards, JSON-LD markers
-├── metadata.json                  # AI Studio app metadata
 ├── package.json                   # Dependencies and scripts (package-lock.json is the only lockfile)
 ├── package-lock.json
 ├── tsconfig.json                  # TypeScript configuration
 ├── vite.config.ts                 # Vite + React + Tailwind plugins, seoJsonLd(), Vitest config
-├── .github/workflows/ci.yml       # CI: npm ci → lint → test → build (push/PR to main)
-├── .env.example                   # AI Studio environment template (unused by the app)
+├── vercel.json                    # Deployment security headers (nosniff, X-Frame-Options, ...)
+├── .github/workflows/ci.yml       # CI: npm ci → audit → lint → test → build on Node 20/22 (push/PR to main)
+├── .github/dependabot.yml         # Weekly dependency updates (npm + github-actions)
 ├── LICENSE                        # Apache-2.0
 ├── SEO.md                         # SEO implementation notes and launch checklist
 ├── README.md
@@ -146,7 +146,7 @@ qr/
 
 ### Prerequisites
 
-- **Node.js 20 LTS or newer** (Vite 6 requires Node 18+; 20 LTS is recommended)
+- **Node.js `^20.19.0`, `^22.13.0` or newer** (the `engines` field in `package.json` matches Vitest's and jsdom's Node requirements and what CI runs)
 - npm (`package-lock.json` is the only lockfile in the repo)
 
 ### Install and run
@@ -159,7 +159,7 @@ npm install
 npm run dev
 ```
 
-No API key or `.env` file is needed — generation is entirely client-side. The variables in `.env.example` (`GEMINI_API_KEY`, `APP_URL`) are leftovers from the AI Studio scaffold and are not read by this app.
+No API key or `.env` file is needed — generation is entirely client-side and the app reads no environment variables at all.
 
 ### Production build
 
