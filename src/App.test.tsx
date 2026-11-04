@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
 import { QrHistoryItem } from "./types";
 
@@ -15,6 +15,17 @@ const urlHistoryEntry: QrHistoryItem = {
   contentType: "url",
 };
 
+/** Source of the previewed QR image (only present once generation succeeded). */
+const getPreviewSrc = () => screen.getByAltText(/qr code for/i).getAttribute("src");
+
+/** Waits until the preview shows a freshly generated matrix. */
+const waitForFreshPreview = async (previousSrc: string | null) => {
+  await waitFor(() => expect(getPreviewSrc()).toMatch(/^data:image\/png/), { timeout: 4000 });
+  if (previousSrc !== null) {
+    await waitFor(() => expect(getPreviewSrc()).not.toBe(previousSrc), { timeout: 4000 });
+  }
+};
+
 describe("App", () => {
   it("renders the generator workspace and the export actions", () => {
     render(<App />);
@@ -27,6 +38,23 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /^svg$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^copy$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^share$/i })).toBeInTheDocument();
+  });
+
+  it("starts with the production URL and an empty history", async () => {
+    localStorage.clear();
+    render(<App />);
+
+    const urlInput = screen.getByPlaceholderText(
+      "e.g. google.com or your-destination-link"
+    ) as HTMLInputElement;
+    expect(urlInput.value).toBe("https://freesubqr.vercel.app");
+
+    // No history exists until the first successful export.
+    await waitForFreshPreview(null);
+    expect(localStorage.getItem("hk_qr_history")).toBeNull();
+    expect(screen.getByRole("button", { name: /open recent qr history/i })).toHaveTextContent(
+      /^History0$/
+    );
   });
 
   it("switches between the url, text and wifi content types", () => {
@@ -53,7 +81,67 @@ describe("App", () => {
     expect(screen.getAllByRole("listitem").length).toBeGreaterThanOrEqual(9);
   });
 
-  it("never saves a generated Wi-Fi code to history", async () => {
+  it("records history only after a successful export, de-duplicating URLs by value", async () => {
+    localStorage.clear();
+    render(<App />);
+
+    await waitForFreshPreview(null);
+
+    // Generating alone writes nothing.
+    expect(localStorage.getItem("hk_qr_history")).toBeNull();
+
+    const download = screen.getByRole("button", { name: /^download$/i });
+    fireEvent.click(download);
+
+    const first = JSON.parse(localStorage.getItem("hk_qr_history") ?? "[]");
+    expect(first).toHaveLength(1);
+    expect(first[0].url).toBe("https://freesubqr.vercel.app");
+    expect(first[0].contentType).toBe("url");
+
+    // Re-exporting the same destination de-duplicates case-insensitively:
+    // only the newest payload survives, and no second entry appears.
+    const previousSrc = getPreviewSrc();
+    fireEvent.change(screen.getByPlaceholderText("e.g. google.com or your-destination-link"), {
+      target: { value: "HTTPS://FREESUBQR.VERCEL.APP" },
+    });
+    await waitForFreshPreview(previousSrc);
+
+    fireEvent.click(download);
+
+    const second = JSON.parse(localStorage.getItem("hk_qr_history") ?? "[]");
+    expect(second).toHaveLength(1);
+    expect(second[0].url).toBe("HTTPS://FREESUBQR.VERCEL.APP");
+  });
+
+  it("de-duplicates text case-sensitively", async () => {
+    localStorage.clear();
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^text content type$/i }));
+    const textarea = screen.getByPlaceholderText(
+      "e.g. Meet me at the main entrance at 7pm"
+    );
+    fireEvent.change(textarea, { target: { value: "Meeting at 7" } });
+
+    await waitForFreshPreview(null);
+    fireEvent.click(screen.getByRole("button", { name: /^download$/i }));
+    expect(JSON.parse(localStorage.getItem("hk_qr_history") ?? "[]")).toHaveLength(1);
+
+    // Same text in a different case is a different payload for the text type.
+    const previousSrc = getPreviewSrc();
+    fireEvent.change(textarea, { target: { value: "meeting at 7" } });
+    await waitForFreshPreview(previousSrc);
+    fireEvent.click(screen.getByRole("button", { name: /^download$/i }));
+
+    const stored = JSON.parse(localStorage.getItem("hk_qr_history") ?? "[]");
+    expect(stored).toHaveLength(2);
+    expect(stored.map((entry: QrHistoryItem) => entry.url)).toEqual([
+      "meeting at 7",
+      "Meeting at 7",
+    ]);
+  });
+
+  it("never saves a generated Wi-Fi code to history, even when exported", async () => {
     localStorage.clear();
     localStorage.setItem("hk_qr_history", JSON.stringify([urlHistoryEntry]));
 
@@ -68,15 +156,18 @@ describe("App", () => {
     });
 
     // Wait for a successful generation (the preview image only appears once
-    // the matrix has been compiled) so the history path really executed.
-    await screen.findByAltText(/qr code for HomeNetwork/i, {}, { timeout: 4000 });
+    // the matrix has been compiled) so the export path really executes.
+    await waitFor(() => expect(getPreviewSrc()).toMatch(/^data:image\/png/), { timeout: 4000 });
+
+    // Export attempts must not persist the Wi-Fi payload either.
+    fireEvent.click(screen.getByRole("button", { name: /^download$/i }));
 
     const stored = localStorage.getItem("hk_qr_history") ?? "";
     expect(stored).toBe(JSON.stringify([urlHistoryEntry]));
     expect(stored).not.toContain("hunter2-secret");
     expect(stored).not.toContain("WIFI:");
 
-    // In-memory history also unchanged: still just the one seeded entry.
+    // In-memory history also unchanged: still just the one stored entry.
     expect(screen.getByRole("button", { name: /open recent qr history/i })).toHaveTextContent(
       /^History1$/
     );

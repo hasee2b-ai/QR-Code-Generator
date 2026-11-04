@@ -16,6 +16,7 @@ import { generateQrCode } from "./utils/qrGenerator";
 import { generateQrSvg } from "./utils/qrSvg";
 import { buildQrContent } from "./utils/qrContent";
 import { PRESET_LOGOS, createPresetSvgDataUri, resolvePresetIconColor } from "./utils/presetLogos";
+import { DEFAULT_URL } from "./data/presets";
 import { storageGet, storageRemove, storageSet } from "./utils/storage";
 
 const DEFAULT_WIFI: WifiConfig = {
@@ -40,21 +41,39 @@ function isStorableHistoryItem(item: unknown): boolean {
   return true;
 }
 
-/** Placeholder shown until the user generates their own codes. */
-function createSeedHistory(): QrHistoryItem[] {
-  return [
-    {
-      id: "seed-1",
-      url: "https://ai.studio/build",
-      timestamp: Date.now(),
-      qrColor: "#000000",
-      bgColor: "#ffffff",
-      size: 750,
-      errorCorrection: "M",
-      logo: null,
-      contentType: "url",
-    },
-  ];
+/**
+ * De-duplication rule: URLs are compared case-insensitively (host names are
+ * case-insensitive), plain text exactly as typed.
+ */
+function isSameHistoryPayload(a: QrHistoryItem, b: QrHistoryItem): boolean {
+  if ((a.contentType ?? "url") !== (b.contentType ?? "url")) return false;
+  const left = a.url.trim();
+  const right = b.url.trim();
+  if ((a.contentType ?? "url") === "text") return left === right;
+  return left.toLowerCase() === right.toLowerCase();
+}
+
+/** Reads stored history, purging any Wi-Fi entries older versions saved. */
+function loadHistory(): QrHistoryItem[] {
+  const saved = storageGet("hk_qr_history");
+  if (!saved) return [];
+
+  try {
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed)) return [];
+
+    // Drop any Wi-Fi entries (and the passwords they carry) that older
+    // versions may have written, then persist the cleaned list.
+    const cleaned = parsed.filter(isStorableHistoryItem);
+    if (cleaned.length !== parsed.length) {
+      storageSet("hk_qr_history", JSON.stringify(cleaned));
+    }
+
+    return cleaned.slice(0, 5);
+  } catch (e) {
+    console.error("Error reading qr history", e);
+    return [];
+  }
 }
 
 const EMPTY_STATES: Record<ContentType, { title: string; hint: string }> = {
@@ -77,7 +96,7 @@ export default function App() {
   });
 
   const [contentType, setContentType] = useState<ContentType>("url");
-  const [url, setUrl] = useState<string>("https://ai.studio/build");
+  const [url, setUrl] = useState<string>(DEFAULT_URL);
   const [text, setText] = useState<string>("");
   const [wifi, setWifi] = useState<WifiConfig>(DEFAULT_WIFI);
   const [qrColor, setQrColor] = useState<string>("#000000");
@@ -92,31 +111,7 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
-  const [history, setHistory] = useState<QrHistoryItem[]>(() => {
-    if (typeof window === "undefined") return createSeedHistory();
-
-    const saved = storageGet("hk_qr_history");
-    if (!saved) return createSeedHistory();
-
-    try {
-      const parsed = JSON.parse(saved);
-      if (!Array.isArray(parsed)) return createSeedHistory();
-
-      // Drop any Wi-Fi entries (and the passwords they carry) that older
-      // versions may have written, then persist the cleaned list.
-      const cleaned = parsed.filter(isStorableHistoryItem);
-      if (cleaned.length !== parsed.length) {
-        storageSet("hk_qr_history", JSON.stringify(cleaned));
-      }
-
-      if (cleaned.length > 0) return cleaned.slice(0, 5);
-      // Everything was Wi-Fi and got dropped — show an empty drawer.
-      return parsed.length > 0 ? [] : createSeedHistory();
-    } catch (e) {
-      console.error("Error reading qr history", e);
-      return createSeedHistory();
-    }
-  });
+  const [history, setHistory] = useState<QrHistoryItem[]>(() => loadHistory());
 
   /** The exact string encoded into the QR matrix for the active content type. */
   const content = useMemo(
@@ -245,32 +240,6 @@ export default function App() {
         if (active) {
           setQrDataUrl(dataUrl);
           setErrorMessage(null);
-
-          // Update recent history with the generated QR code (last 5 entries).
-          // Wi-Fi codes are never stored: their payload embeds the network
-          // password, which must not be persisted to localStorage.
-          if (content.trim().length >= 3 && contentType !== "wifi") {
-            setHistory((prev) => {
-              const cleanUrl = content.trim();
-              const filtered = prev.filter(
-                (item) => item.url.trim().toLowerCase() !== cleanUrl.toLowerCase()
-              );
-              const newItem: QrHistoryItem = {
-                id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-                url: cleanUrl,
-                timestamp: Date.now(),
-                qrColor,
-                bgColor,
-                size,
-                errorCorrection: logo?.enabled && logo.src ? "H" : errorCorrection,
-                logo: logo && logo.enabled && logo.src ? { ...logo } : null,
-                contentType,
-              };
-              const updated = [newItem, ...filtered].slice(0, 5);
-              storageSet("hk_qr_history", JSON.stringify(updated));
-              return updated;
-            });
-          }
         }
       } catch (err: any) {
         console.error(err);
@@ -312,6 +281,40 @@ export default function App() {
     return url.startsWith("http") ? url : `https://${url}`;
   };
 
+  /**
+   * Records the current code in history — called only after a successful
+   * export (Download PNG, Download SVG, Copy, Share), so intermediate typing
+   * states never end up in the list. `isStorableHistoryItem` guards the save
+   * path too: Wi-Fi payloads embed the network password and are never stored.
+   */
+  const recordHistory = () => {
+    const payload = content.trim();
+    if (payload.length < 3) return;
+
+    const newItem: QrHistoryItem = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      url: payload,
+      timestamp: Date.now(),
+      qrColor,
+      bgColor,
+      size,
+      errorCorrection: logo?.enabled && logo.src ? "H" : errorCorrection,
+      logo: logo && logo.enabled && logo.src ? { ...logo } : null,
+      contentType,
+    };
+
+    if (!isStorableHistoryItem(newItem)) return;
+
+    setHistory((prev) => {
+      const updated = [
+        newItem,
+        ...prev.filter((item) => !isSameHistoryPayload(item, newItem)),
+      ].slice(0, 5);
+      storageSet("hk_qr_history", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   // Download QR code as PNG file
   const handleDownload = () => {
     if (!qrDataUrl) return;
@@ -322,6 +325,7 @@ export default function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    recordHistory();
   };
 
   // Download the same matrix as a scalable SVG file
@@ -349,6 +353,7 @@ export default function App() {
       document.body.removeChild(link);
 
       setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
+      recordHistory();
     } catch (err: any) {
       console.error(err);
       setErrorMessage(err?.message || "Failed to export SVG. Try other values.");
@@ -368,12 +373,14 @@ export default function App() {
         }),
       ]);
       setCopied(true);
+      recordHistory();
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.warn("ClipboardItem write failed, falling back to copy string URL", err);
       try {
         await navigator.clipboard.writeText(getShareableUrl() || content);
         setCopied(true);
+        recordHistory();
         setTimeout(() => setCopied(false), 2000);
       } catch (fallbackErr) {
         console.error("Clipboard copy failed entirely", fallbackErr);
@@ -419,6 +426,7 @@ export default function App() {
           text: shareText,
           ...(shareUrl ? { url: shareUrl } : {}),
         });
+        recordHistory();
         setShareStatus("shared");
         setTimeout(() => setShareStatus("idle"), 2500);
         return;
@@ -431,6 +439,7 @@ export default function App() {
           text: shareText,
           url: shareUrl,
         });
+        recordHistory();
         setShareStatus("shared");
         setTimeout(() => setShareStatus("idle"), 2500);
         return;
@@ -438,6 +447,7 @@ export default function App() {
 
       // 3. Graceful fallback if Web Share is unsupported in this environment (e.g. desktop non-compatible)
       await navigator.clipboard.writeText(shareUrl || content);
+      recordHistory();
       setShareStatus("copied");
       setShareFeedback(
         `Web Share unsupported on this browser. ${isLink ? "Link" : "Content"} copied to clipboard!`
@@ -454,6 +464,7 @@ export default function App() {
       console.warn("Web Share failed, falling back to clipboard copy", err);
       try {
         await navigator.clipboard.writeText(shareUrl || content);
+        recordHistory();
         setShareStatus("copied");
         setShareFeedback(`${isLink ? "Link" : "Content"} copied to clipboard!`);
         setTimeout(() => {

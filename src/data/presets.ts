@@ -1,5 +1,11 @@
 import { ColorPreset, PresetItem, SizePreset } from "../types";
 
+/**
+ * Single source of truth for the URL the generator starts with (and what the
+ * app encodes before the visitor touches the input).
+ */
+export const DEFAULT_URL = "https://freesubqr.vercel.app";
+
 /** Preset colors with sharp geometric blocks matching the theme */
 export const FOR_COLOR_PRESETS: ColorPreset[] = [
   { name: "Obsidian", hex: "#000000" },
@@ -30,5 +36,4 @@ export const TEST_PRESETS: PresetItem[] = [
   { label: "Google", url: "https://google.com" },
   { label: "GitHub", url: "https://github.com" },
   { label: "Wikipedia", url: "https://wikipedia.org" },
-  { label: "AI Studio", url: "https://ai.studio" },
 ];

@@ -31,7 +31,7 @@ A fast, private, browser-only QR code generator. Paste a link, style the code, a
 
 - **Three content types** — **URL** (with automatic `https://` prefixing), plain **Text**, and **Wi-Fi** (encodes a `WIFI:T:...` join payload that phone cameras scan to connect).
 - **Live preview** — the QR code regenerates as you type, with a subtle progress indicator while the matrix is compiled.
-- **URL validation** — a visual indicator confirms a valid URL structure and offers one-click test presets (Google, GitHub, Wikipedia, AI Studio).
+- **URL validation** — a visual indicator confirms a valid URL structure and offers one-click test presets (Google, GitHub, Wikipedia).
 
 ### Styling
 
@@ -58,7 +58,7 @@ A fast, private, browser-only QR code generator. Paste a link, style the code, a
 
 ### History and privacy
 
-- **Recent history** — the last 5 generated codes are stored in `localStorage` with their colors, size, error correction, and logo settings.
+- **Recent history** — the last 5 exported codes are stored in `localStorage` with their colors, size, error correction, and logo settings (history is recorded on export, not on every keystroke).
 - **Wi-Fi codes are never saved** — history only stores URL and text codes; Wi-Fi payloads embed the network password, so they are excluded from history (and any previously stored Wi-Fi entries are purged on load).
 - **Restore in one click** — click any history item to reload its exact configuration.
 - **Per-item actions** — copy or share the destination link, remove a single entry, or clear the entire history.
@@ -223,7 +223,7 @@ All `localStorage` access goes through the safe wrappers in `src/utils/storage.t
 | `hk_qr_theme` | `"light"` or `"dark"` |
 | `hk_qr_history` | JSON array of up to 5 `QrHistoryItem` objects |
 
-History entries store the content type, payload, timestamp, foreground/background colors, size, error-correction level, and full logo configuration. **Wi-Fi codes are never persisted**: entries typed `wifi` (or legacy entries whose payload starts with `WIFI:`) are skipped on save and purged from existing stored history on load, so network passwords are not kept in the browser. The initial state contains one seeded entry pointing at `https://ai.studio/build` until the user generates their own codes.
+History entries store the content type, payload, timestamp, foreground/background colors, size, error-correction level, and full logo configuration. The generator starts with the production URL (`DEFAULT_URL` in `src/data/presets.ts`) and an **empty history** — an entry is recorded only after a successful export (Download PNG, Download SVG, Copy, or Share), never while typing, and duplicates are de-duplicated case-insensitively for URLs and case-sensitively for text. **Wi-Fi codes are never persisted**: entries typed `wifi` (or legacy entries whose payload starts with `WIFI:`) are skipped on save and purged from existing stored history on load, so network passwords are not kept in the browser.
 
 ### Contrast helpers
 
