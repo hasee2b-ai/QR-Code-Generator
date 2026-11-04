@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import QRCode from "qrcode";
 
 // ⚠️ Keep in sync with the canonical/og:url in index.html.
-const SITE_URL = "https://example.com";
+const SITE_URL = "https://freesubqr.vercel.app";
 
 const PUBLIC_DIR = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),

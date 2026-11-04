@@ -1,6 +1,20 @@
 export type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 export type LogoShape = "rounded" | "circle" | "square";
 
+/** What the user is encoding: a link, plain text, or a Wi-Fi join payload. */
+export type ContentType = "url" | "text" | "wifi";
+
+/** Wi-Fi authentication type (`nopass` = open network). */
+export type WifiSecurity = "WPA" | "WEP" | "nopass";
+
+export interface WifiConfig {
+  ssid: string;
+  password: string;
+  security: WifiSecurity;
+  hidden: boolean;
+}
+
+
 export interface LogoConfig {
   enabled: boolean;
   src: string; // Base64 Data URL or SVG Data URI
@@ -31,6 +45,10 @@ export interface QrHistoryItem {
   size: number;
   errorCorrection: ErrorCorrectionLevel;
   logo?: LogoConfig | null;
+  /** How `url` should be interpreted when restored (defaults to `"url"`). */
+  contentType?: ContentType;
+  /** Raw Wi-Fi form values, present when `contentType` is `"wifi"`. */
+  wifi?: WifiConfig;
 }
 
 export interface PresetItem {

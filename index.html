@@ -1,8 +1,8 @@
 <!doctype html>
 <!--
   ============================================================================
-  SEO: Before deploying, replace EVERY occurrence of "https://example.com"
-  with your real production URL. Files to update:
+  SEO: Before deploying, replace EVERY occurrence of the placeholder domain
+  ("https://example.com") with your real production URL. Files to update:
     - index.html (canonical, og:url, og:image, JSON-LD, stylesheet not affected)
     - public/robots.txt (Sitemap URL)
     - public/sitemap.xml (loc URL)
@@ -22,7 +22,7 @@
       content="Generate free QR codes for any link in seconds. Customize colors, add a logo, pick sizes up to 3000px and download print-ready PNGs. No signup, no watermarks."
     />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
-    <link rel="canonical" href="https://example.com/" />
+    <link rel="canonical" href="https://freesubqr.vercel.app/" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
 
@@ -40,8 +40,8 @@
       property="og:description"
       content="Generate free QR codes for any link in seconds. Customize colors, add a logo, pick sizes up to 3000px and download print-ready PNGs. No signup, no watermarks."
     />
-    <meta property="og:url" content="https://example.com/" />
-    <meta property="og:image" content="https://example.com/og-image.png" />
+    <meta property="og:url" content="https://freesubqr.vercel.app/" />
+    <meta property="og:image" content="https://freesubqr.vercel.app/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="HK QR — free QR code generator with customization and print-ready PNG export" />
@@ -53,7 +53,7 @@
       name="twitter:description"
       content="Generate free QR codes for any link in seconds. Customize colors, add a logo, pick sizes up to 3000px and download print-ready PNGs. No signup, no watermarks."
     />
-    <meta name="twitter:image" content="https://example.com/og-image.png" />
+    <meta name="twitter:image" content="https://freesubqr.vercel.app/og-image.png" />
     <meta name="twitter:image:alt" content="HK QR — free QR code generator with customization and print-ready PNG export" />
 
     <!-- Performance: load Google Fonts with preconnect instead of a CSS @import -->
@@ -64,84 +64,11 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
     />
 
-    <!-- Structured data: helps Google understand and richly display the app -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "HK QR – Free QR Code Generator",
-        "url": "https://example.com/",
-        "image": "https://example.com/og-image.png",
-        "description": "Free online QR code generator. Create, customize and download high-resolution QR codes for any URL — colors, logos, error correction and print-ready PNG export up to 3000px. No signup required.",
-        "applicationCategory": "UtilitiesApplication",
-        "operatingSystem": "Any",
-        "browserRequirements": "Requires JavaScript",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "featureList": [
-          "Custom QR code foreground and background colors",
-          "Center logo upload and preset icon badges",
-          "Error correction levels L, M, Q and H",
-          "PNG export in sizes from 350px to 3000px",
-          "Copy to clipboard, Web Share API and local history"
-        ]
-      }
-    </script>
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "How do I make a QR code for my website?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Paste your website URL into the Source Destination URL field, adjust colors, size and error correction if you want, then hit Download. Your QR code is generated instantly as a print-ready PNG."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Are these QR codes free?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. HK QR is free with no signup, no watermarks and no limit on how many codes you generate."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Can I customize QR code colors and add a logo?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. Choose from preset foreground and background colors or pick any custom color, and place a preset icon or your own uploaded image in the center. When a logo is enabled, error correction is automatically raised to level H so the code still scans."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "What size should a QR code be?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "For print, keep the code at least 2–3 cm (about 1 inch) wide, and larger for posters or billboards. For screens, 350px is enough for web use. The generator offers Small Print, Medium Card, Large Poster and Ultra Crisp presets up to 3000 × 3000 px."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Do QR codes expire?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "No. These are static QR codes encoded directly into the image, so they never expire and work without an internet connection on the scanning side. They always point to the URL you encoded."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Is my data stored anywhere?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "No. QR codes are generated entirely in your browser. Recent codes are kept only in your browser's local storage and can be cleared at any time from the History panel."
-            }
-          }
-        ]
-      }
-    </script>
+    <!-- Structured data: JSON-LD is generated at build time from
+         src/data/content.ts by the seoJsonLd() plugin in vite.config.ts.
+         Edit the copy there — do not add JSON-LD blocks by hand. -->
+    <!-- JSON-LD:START -->
+    <!-- JSON-LD:END -->
   </head>
   <body>
     <div id="root"></div>

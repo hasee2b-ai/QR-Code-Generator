@@ -1,5 +1,5 @@
 # HK QR – Free QR Code Generator
-# https://example.com/  (replace with your production URL before deploying)
+# https://freesubqr.vercel.app/  (production URL — update if the domain changes)
 
 User-agent: *
 Allow: /
@@ -11,4 +11,4 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://example.com/sitemap.xml
+Sitemap: https://freesubqr.vercel.app/sitemap.xml
