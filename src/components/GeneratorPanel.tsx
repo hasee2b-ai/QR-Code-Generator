@@ -1,4 +1,4 @@
-import { type RefObject } from "react";
+import { type RefObject, useId } from "react";
 import { Check, Globe, Trash2, History, Link2, Type, Wifi } from "lucide-react";
 import LogoSelector from "./LogoSelector";
 import { ContentType, ErrorCorrectionLevel, LogoConfig, WifiConfig } from "../types";
@@ -68,6 +68,23 @@ export default function GeneratorPanel({
   onOpenHistory,
   onClearInput,
 }: GeneratorPanelProps) {
+  // Every <label> is linked to its control via htmlFor/id (useId keeps the
+  // ids unique across renders); captions over button groups become group
+  // labels via role="group" + aria-labelledby.
+  const contentTypeLabelId = useId();
+  const urlInputId = useId();
+  const textInputId = useId();
+  const wifiSectionLabelId = useId();
+  const ssidInputId = useId();
+  const securityLabelId = useId();
+  const hiddenNetworkLabelId = useId();
+  const qrColorLabelId = useId();
+  const qrColorInputId = useId();
+  const bgColorLabelId = useId();
+  const bgColorInputId = useId();
+  const sizeLabelId = useId();
+  const errorCorrectionLabelId = useId();
+
   // Auto-protocol hint / validation dot only apply to the URL content type.
   const needsProtocol = contentType === "url" && !!url && !/^https?:\/\//i.test(url);
   const urlIsValid = contentType === "url" && isValidUrl(url);
@@ -128,10 +145,17 @@ export default function GeneratorPanel({
 
           {/* Content type switcher: URL / Text / Wi-Fi */}
           <div className="space-y-2">
-            <label className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+            <span
+              id={contentTypeLabelId}
+              className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+            >
               Content Type
-            </label>
-            <div className="flex border-2 border-neutral-900 dark:border-neutral-200 p-0.5 bg-neutral-100 dark:bg-neutral-950">
+            </span>
+            <div
+              role="group"
+              aria-labelledby={contentTypeLabelId}
+              className="flex border-2 border-neutral-900 dark:border-neutral-200 p-0.5 bg-neutral-100 dark:bg-neutral-950"
+            >
               {CONTENT_TYPES.map((type) => {
                 const Icon = type.icon;
                 const isSelected = contentType === type.id;
@@ -161,7 +185,10 @@ export default function GeneratorPanel({
           {contentType === "url" && (
             <div className="relative">
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+                <label
+                  htmlFor={urlInputId}
+                  className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+                >
                   Source Destination URL
                 </label>
                 {labelActions}
@@ -172,6 +199,7 @@ export default function GeneratorPanel({
                   <Globe className="w-4 h-4" />
                 </div>
                 <input
+                  id={urlInputId}
                   type="text"
                   placeholder="e.g. google.com or your-destination-link"
                   value={url}
@@ -228,13 +256,17 @@ export default function GeneratorPanel({
           {contentType === "text" && (
             <div className="relative">
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+                <label
+                  htmlFor={textInputId}
+                  className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+                >
                   Text Content
                 </label>
                 {labelActions}
               </div>
 
               <textarea
+                id={textInputId}
                 rows={4}
                 placeholder="e.g. Meet me at the main entrance at 7pm"
                 value={text}
@@ -254,14 +286,19 @@ export default function GeneratorPanel({
           {contentType === "wifi" && (
             <div className="relative">
               <div className="flex items-center justify-between mb-2">
-                <label className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+                <label
+                  id={wifiSectionLabelId}
+                  htmlFor={ssidInputId}
+                  className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+                >
                   Wi-Fi Network
                 </label>
                 {labelActions}
               </div>
 
-              <div className="space-y-3">
+              <div role="group" aria-labelledby={wifiSectionLabelId} className="space-y-3">
                 <input
+                  id={ssidInputId}
                   type="text"
                   aria-label="Network name (SSID)"
                   placeholder="Network name (SSID)"
@@ -282,10 +319,17 @@ export default function GeneratorPanel({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div>
-                    <label className="block text-[9px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1.5">
+                    <span
+                      id={securityLabelId}
+                      className="block text-[9px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1.5"
+                    >
                       Security
-                    </label>
-                    <div className="grid grid-cols-3 gap-1.5">
+                    </span>
+                    <div
+                      role="group"
+                      aria-labelledby={securityLabelId}
+                      className="grid grid-cols-3 gap-1.5"
+                    >
                       {WIFI_SECURITY_OPTIONS.map((option) => {
                         const isSelected = wifi.security === option.id;
                         return (
@@ -313,10 +357,13 @@ export default function GeneratorPanel({
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[9px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1.5">
+                  <div role="group" aria-labelledby={hiddenNetworkLabelId}>
+                    <span
+                      id={hiddenNetworkLabelId}
+                      className="block text-[9px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1.5"
+                    >
                       Hidden Network
-                    </label>
+                    </span>
                     <button
                       type="button"
                       role="switch"
@@ -358,7 +405,10 @@ export default function GeneratorPanel({
 
             {/* Dark Code Matrix Color picker */}
             <div className="space-y-2">
-              <label className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+              <label
+                htmlFor={qrColorInputId}
+                className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+              >
                 Matrix Block Color
               </label>
               <div className="flex items-center gap-2">
@@ -381,8 +431,12 @@ export default function GeneratorPanel({
                 </div>
 
                 <div className="pl-2 border-l border-neutral-200 dark:border-neutral-700">
-                  <label className="relative w-7 h-7 border-2 border-neutral-900 dark:border-neutral-300 cursor-pointer overflow-hidden flex items-center justify-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors rounded-none">
+                  <label
+                    htmlFor={qrColorInputId}
+                    className="relative w-7 h-7 border-2 border-neutral-900 dark:border-neutral-300 cursor-pointer overflow-hidden flex items-center justify-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors rounded-none"
+                  >
                     <input
+                      id={qrColorInputId}
                       type="color"
                       value={qrColor}
                       onChange={(e) => onQrColorChange(e.target.value)}
@@ -399,7 +453,10 @@ export default function GeneratorPanel({
 
             {/* Background matrix Color picker */}
             <div className="space-y-2">
-              <label className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+              <label
+                htmlFor={bgColorInputId}
+                className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+              >
                 Pattern Background
               </label>
               <div className="flex items-center gap-2">
@@ -422,8 +479,12 @@ export default function GeneratorPanel({
                 </div>
 
                 <div className="pl-2 border-l border-neutral-200 dark:border-neutral-700">
-                  <label className="relative w-7 h-7 border-2 border-neutral-900 dark:border-neutral-300 cursor-pointer overflow-hidden flex items-center justify-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors rounded-none">
+                  <label
+                    htmlFor={bgColorInputId}
+                    className="relative w-7 h-7 border-2 border-neutral-900 dark:border-neutral-300 cursor-pointer overflow-hidden flex items-center justify-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors rounded-none"
+                  >
                     <input
+                      id={bgColorInputId}
                       type="color"
                       value={bgColor}
                       onChange={(e) => onBgColorChange(e.target.value)}
@@ -443,14 +504,21 @@ export default function GeneratorPanel({
           {/* Sizing Export Standard (Brutalist blocks) */}
           <div className="space-y-2 pt-4 border-t border-neutral-900/10 dark:border-neutral-800">
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+              <span
+                id={sizeLabelId}
+                className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+              >
                 Export Grid Scale
-              </label>
+              </span>
               <span className="text-[10px] font-mono font-bold text-neutral-900 dark:text-neutral-100 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 px-2 py-0.5">
                 {size} × {size} px (PNG + SVG)
               </span>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div
+              role="group"
+              aria-labelledby={sizeLabelId}
+              className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+            >
               {SIZE_PRESETS.map((preset) => {
                 const isSelected = size === preset.value;
                 return (
@@ -475,10 +543,17 @@ export default function GeneratorPanel({
 
           {/* Error Correction Density */}
           <div className="space-y-2 pt-4 border-t border-neutral-900/10 dark:border-neutral-800">
-            <label className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1">
+            <span
+              id={errorCorrectionLabelId}
+              className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1"
+            >
               Redundancy Error Correction
-            </label>
-            <div className="grid grid-cols-4 gap-2 bg-neutral-100 dark:bg-neutral-800/80 p-1 border-2 border-neutral-200 dark:border-neutral-700">
+            </span>
+            <div
+              role="group"
+              aria-labelledby={errorCorrectionLabelId}
+              className="grid grid-cols-4 gap-2 bg-neutral-100 dark:bg-neutral-800/80 p-1 border-2 border-neutral-200 dark:border-neutral-700"
+            >
               {(["L", "M", "Q", "H"] as const).map((level) => {
                 const details = {
                   L: { title: "Level L", pct: "7%" },

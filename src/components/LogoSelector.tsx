@@ -379,6 +379,7 @@ export default function LogoSelector({
             onChange={handleFileInputChange}
             className="hidden"
             id="qr-logo-file-input"
+            aria-label="Upload logo image"
           />
 
           <div

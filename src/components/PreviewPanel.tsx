@@ -51,6 +51,21 @@ export default function PreviewPanel({
 }: PreviewPanelProps) {
   const canExport = !!qrDataUrl && !errorMessage;
 
+  /**
+   * Single polite live region message: export feedback ("Copied!", share
+   * results and fallback text) is announced without stealing focus; errors
+   * use their own role="alert" region below.
+   */
+  const liveMessage =
+    shareFeedback ??
+    (copied
+      ? "Copied!"
+      : shareStatus === "shared"
+        ? "Shared!"
+        : shareStatus === "copied"
+          ? "Link copied to clipboard."
+          : "");
+
   const primaryButtonClass = canExport
     ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 active:translate-x-[2px] active:translate-y-[2px] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] border-2 border-neutral-900 dark:border-white cursor-pointer"
     : "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 border border-neutral-300 dark:border-neutral-700 cursor-not-allowed";
@@ -62,8 +77,13 @@ export default function PreviewPanel({
   return (
     <section
       onWheel={onWheel}
+      aria-label="QR code preview"
       className="w-full lg:w-1/2 bg-neutral-100 dark:bg-neutral-950 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-8 xl:p-12 relative border-t lg:border-t-0 lg:border-l border-neutral-900/10 dark:border-neutral-800 transition-colors lg:h-full lg:overflow-y-auto custom-scrollbar"
     >
+      {/* Polite live region: announces export feedback and share fallbacks. */}
+      <div aria-live="polite" className="sr-only">
+        {liveMessage}
+      </div>
 
       {/* Radial Dotted Grid Decoration matching theme */}
       <div
@@ -120,7 +140,10 @@ export default function PreviewPanel({
 
         {/* Error notifications container */}
         {errorMessage && (
-          <div className="mt-6 w-full p-3 border-2 border-red-900 dark:border-red-600 bg-red-50 dark:bg-red-950/40 flex gap-2 text-red-900 dark:text-red-300 text-xs rounded-none font-mono">
+          <div
+            role="alert"
+            className="mt-6 w-full p-3 border-2 border-red-900 dark:border-red-600 bg-red-50 dark:bg-red-950/40 flex gap-2 text-red-900 dark:text-red-300 text-xs rounded-none font-mono"
+          >
             <ShieldAlert className="w-4 h-4 flex-shrink-0" />
             <span>{errorMessage}</span>
           </div>

@@ -56,9 +56,7 @@ describe("App", () => {
     localStorage.clear();
     render(<App />);
 
-    const urlInput = screen.getByPlaceholderText(
-      "e.g. google.com or your-destination-link"
-    ) as HTMLInputElement;
+    const urlInput = screen.getByLabelText("Source Destination URL") as HTMLInputElement;
     expect(urlInput.value).toBe("https://freesubqr.vercel.app");
 
     // No history exists until the first successful export.
@@ -113,7 +111,7 @@ describe("App", () => {
     // Re-exporting the same destination de-duplicates case-insensitively:
     // only the newest payload survives, and no second entry appears.
     const previousSrc = getPreviewSrc();
-    fireEvent.change(screen.getByPlaceholderText("e.g. google.com or your-destination-link"), {
+    fireEvent.change(screen.getByLabelText("Source Destination URL"), {
       target: { value: "HTTPS://FREESUBQR.VERCEL.APP" },
     });
     await waitForFreshPreview(previousSrc);
@@ -130,9 +128,7 @@ describe("App", () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole("button", { name: /^text content type$/i }));
-    const textarea = screen.getByPlaceholderText(
-      "e.g. Meet me at the main entrance at 7pm"
-    );
+    const textarea = screen.getByLabelText("Text Content");
     fireEvent.change(textarea, { target: { value: "Meeting at 7" } });
 
     await waitForFreshPreview(null);
