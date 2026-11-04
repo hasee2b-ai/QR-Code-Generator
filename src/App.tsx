@@ -16,6 +16,7 @@ import { generateQrCode } from "./utils/qrGenerator";
 import { generateQrSvg } from "./utils/qrSvg";
 import { buildQrContent } from "./utils/qrContent";
 import { PRESET_LOGOS, createPresetSvgDataUri, resolvePresetIconColor } from "./utils/presetLogos";
+import { storageGet, storageRemove, storageSet } from "./utils/storage";
 
 const DEFAULT_WIFI: WifiConfig = {
   ssid: "",
@@ -23,6 +24,38 @@ const DEFAULT_WIFI: WifiConfig = {
   security: "WPA",
   hidden: false,
 };
+
+/**
+ * A history entry is only persisted when it cannot contain a Wi-Fi password:
+ * entries typed as `wifi`, and legacy entries whose `url` holds a raw
+ * `WIFI:...` payload, are dropped (both on load and on save).
+ */
+function isStorableHistoryItem(item: unknown): boolean {
+  if (!item || typeof item !== "object") return false;
+  const candidate = item as QrHistoryItem;
+  if (candidate.contentType === "wifi") return false;
+  if (typeof candidate.url === "string" && candidate.url.trim().toUpperCase().startsWith("WIFI:")) {
+    return false;
+  }
+  return true;
+}
+
+/** Placeholder shown until the user generates their own codes. */
+function createSeedHistory(): QrHistoryItem[] {
+  return [
+    {
+      id: "seed-1",
+      url: "https://ai.studio/build",
+      timestamp: Date.now(),
+      qrColor: "#000000",
+      bgColor: "#ffffff",
+      size: 750,
+      errorCorrection: "M",
+      logo: null,
+      contentType: "url",
+    },
+  ];
+}
 
 const EMPTY_STATES: Record<ContentType, { title: string; hint: string }> = {
   url: { title: "Awaiting Link", hint: "Insert destination input to draw vector grid." },
@@ -34,7 +67,7 @@ export default function App() {
   const leftPanelRef = useRef<HTMLElement>(null);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("hk_qr_theme");
+      const saved = storageGet("hk_qr_theme");
       if (saved === "light" || saved === "dark") return saved;
       if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
         return "dark";
@@ -60,32 +93,29 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [history, setHistory] = useState<QrHistoryItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("hk_qr_history");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed.slice(0, 5);
-          }
-        }
-      } catch (e) {
-        console.error("Error reading qr history", e);
+    if (typeof window === "undefined") return createSeedHistory();
+
+    const saved = storageGet("hk_qr_history");
+    if (!saved) return createSeedHistory();
+
+    try {
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return createSeedHistory();
+
+      // Drop any Wi-Fi entries (and the passwords they carry) that older
+      // versions may have written, then persist the cleaned list.
+      const cleaned = parsed.filter(isStorableHistoryItem);
+      if (cleaned.length !== parsed.length) {
+        storageSet("hk_qr_history", JSON.stringify(cleaned));
       }
+
+      if (cleaned.length > 0) return cleaned.slice(0, 5);
+      // Everything was Wi-Fi and got dropped — show an empty drawer.
+      return parsed.length > 0 ? [] : createSeedHistory();
+    } catch (e) {
+      console.error("Error reading qr history", e);
+      return createSeedHistory();
     }
-    return [
-      {
-        id: "seed-1",
-        url: "https://ai.studio/build",
-        timestamp: Date.now(),
-        qrColor: "#000000",
-        bgColor: "#ffffff",
-        size: 750,
-        errorCorrection: "M",
-        logo: null,
-        contentType: "url",
-      },
-    ];
   });
 
   /** The exact string encoded into the QR matrix for the active content type. */
@@ -162,18 +192,14 @@ export default function App() {
   const handleRemoveHistoryItem = (id: string) => {
     setHistory((prev) => {
       const updated = prev.filter((item) => item.id !== id);
-      try {
-        localStorage.setItem("hk_qr_history", JSON.stringify(updated));
-      } catch {}
+      storageSet("hk_qr_history", JSON.stringify(updated));
       return updated;
     });
   };
 
   const handleClearHistory = () => {
     setHistory([]);
-    try {
-      localStorage.removeItem("hk_qr_history");
-    } catch {}
+    storageRemove("hk_qr_history");
   };
 
   useEffect(() => {
@@ -183,7 +209,7 @@ export default function App() {
     } else {
       root.classList.remove("dark");
     }
-    localStorage.setItem("hk_qr_theme", theme);
+    storageSet("hk_qr_theme", theme);
   }, [theme]);
 
   // Generate QR code with options and center logo
@@ -220,8 +246,10 @@ export default function App() {
           setQrDataUrl(dataUrl);
           setErrorMessage(null);
 
-          // Update recent history with the generated QR code (last 5 entries)
-          if (content.trim().length >= 3) {
+          // Update recent history with the generated QR code (last 5 entries).
+          // Wi-Fi codes are never stored: their payload embeds the network
+          // password, which must not be persisted to localStorage.
+          if (content.trim().length >= 3 && contentType !== "wifi") {
             setHistory((prev) => {
               const cleanUrl = content.trim();
               const filtered = prev.filter(
@@ -237,12 +265,9 @@ export default function App() {
                 errorCorrection: logo?.enabled && logo.src ? "H" : errorCorrection,
                 logo: logo && logo.enabled && logo.src ? { ...logo } : null,
                 contentType,
-                ...(contentType === "wifi" ? { wifi: { ...wifi } } : {}),
               };
               const updated = [newItem, ...filtered].slice(0, 5);
-              try {
-                localStorage.setItem("hk_qr_history", JSON.stringify(updated));
-              } catch {}
+              storageSet("hk_qr_history", JSON.stringify(updated));
               return updated;
             });
           }

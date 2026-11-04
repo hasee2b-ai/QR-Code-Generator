@@ -8,15 +8,13 @@ code for website`, `custom qr code with logo`, `download qr code png`.
 
 ---
 
-## ⚠️ Before deploying: replace the placeholder domain
+## 🌐 Domain configuration
 
-The site is not deployed yet, so every URL uses the placeholder
-**`https://example.com`**. Search engines will index whatever is in these files,
-so swap it for your real production URL (with trailing slash) in:
+The production domain is **`https://freesubqr.vercel.app`**. Search engines will index whatever is in these files, so if it ever changes, update it (with trailing slash) in:
 
 | File | What to replace |
 |---|---|
-| `index.html` | `canonical`, `og:url`, `og:image`, `twitter:image`, both JSON-LD blocks |
+| `index.html` | `canonical` (the source of truth — `og:url`, `og:image`, `twitter:image` derive from the page head) |
 | `public/robots.txt` | `Sitemap:` URL (and the comment) |
 | `public/sitemap.xml` | `<loc>` URL (and update `<lastmod>`) |
 | `scripts/generate-seo-assets.mjs` | `SITE_URL` constant |
@@ -24,7 +22,7 @@ so swap it for your real production URL (with trailing slash) in:
 Find every occurrence (PowerShell):
 
 ```powershell
-Select-String -Path index.html,public\robots.txt,public\sitemap.xml,scripts\*.mjs -Pattern "example.com"
+Select-String -Path index.html,public\robots.txt,public\sitemap.xml,scripts\*.mjs -Pattern "freesubqr"
 ```
 
 Then regenerate the social image and icons — **the OG image embeds a real QR
@@ -44,15 +42,15 @@ npm run assets:seo
 - **Canonical URL**, `robots` meta (`index, follow, max-image-preview:large`).
 - **Open Graph + Twitter Card** tags (title, description, image1200×630, alt text) — tested preview image generated at `public/og-image.png`.
 - **Icons**: SVG favicon + PNG fallback + apple-touch-icon.
-- **JSON-LD structured data**: `WebApplication` (with `offers: $0`, feature list) and `FAQPage` mirroring the visible FAQ.
+- **JSON-LD structured data**: `WebApplication` (with `offers: $0`, feature list) and `FAQPage` mirroring the visible FAQ — injected at build time between the `JSON-LD:START` / `JSON-LD:END` markers by the `seoJsonLd()` Vite plugin (see “Keeping it in sync” below).
 - **Fonts moved out of CSS `@import`** into `<link>` tags with `preconnect` — removes a render-blocking round trip (Core Web Vitals / LCP).
 - `theme-color` for light and dark modes.
 
-### `src/App.tsx` (the app itself)
+### `src/components/SeoSections.tsx` + `src/data/content.ts` (the app itself)
 - **H1 rewritten** from the decorative “Instant Resolution.” to the
   keyword-bearing **“Free QR Code Generator”**, with an SEO-focused sub-headline.
-- **New below-the-fold sections** (the biggest ranking lever — the page
-  previously had almost no indexable text):
+- **Below-the-fold sections** (the biggest ranking lever — the page
+  previously had almost no indexable text), rendered from `src/data/content.ts`:
   - `#features` — “Everything a QR code maker should be” + 6 feature cards
   - `#how-it-works` — “How to make a QR code” (3 steps, crawlable ordered list)
   - `#faq` — 6 questions matching the `FAQPage` JSON-LD
@@ -91,11 +89,16 @@ npm run assets:seo
 
 ## Keeping it in sync
 
-- The FAQ lives in **two places**: the visible section in `src/App.tsx` and the
-  `FAQPage` JSON-LD in `index.html`. Edit both together — Google penalizes
-  structured data that doesn’t match visible content.
+- All crawlable copy — features, how-to steps, and the FAQ — lives in **one place**: `src/data/content.ts`. `src/components/SeoSections.tsx` renders it on the page, and the **`seoJsonLd()` Vite plugin** (`vite.config.ts`) injects the `WebApplication` and `FAQPage` JSON-LD from the same data at build time, taking the site URL from the canonical tag. Edit `content.ts` once and the visible copy and structured data change together — Google penalizes structured data that doesn’t match visible content, and this setup can’t drift.
 - When you add new pages/routes later, add them to `public/sitemap.xml` with a
   unique `<title>` / meta description each.
+
+## Related current setup (app features)
+
+- **Content types**: the generator encodes **URL**, plain **Text**, and **Wi-Fi** payloads (`WIFI:T:...` join strings scannable by phone cameras) — see `src/utils/qrContent.ts`.
+- **Exports**: print-ready **PNG** (up to 3000 × 3000 px) and scalable **SVG** (via `src/utils/qrSvg.ts`).
+- **Tests & CI**: `npm test` runs the Vitest suite (payload builders, SVG export, components); GitHub Actions (`.github/workflows/ci.yml`) runs `lint → test → build` on pushes and PRs to `main`.
+- **Privacy**: Wi-Fi codes are never saved to history (their payload contains the network password), and any previously stored Wi-Fi entries are purged on load. All `localStorage` access goes through try/catch wrappers in `src/utils/storage.ts`.
 
 ## Recommended next steps (not implemented)
 

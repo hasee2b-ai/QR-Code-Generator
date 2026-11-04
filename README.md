@@ -29,7 +29,7 @@ A fast, private, browser-only QR code generator. Paste a link, style the code, a
 
 ### QR generation
 
-- **Any URL or text** — paste a full URL or a bare domain; `https://` is added automatically when a protocol is missing.
+- **Three content types** — **URL** (with automatic `https://` prefixing), plain **Text**, and **Wi-Fi** (encodes a `WIFI:T:...` join payload that phone cameras scan to connect).
 - **Live preview** — the QR code regenerates as you type, with a subtle progress indicator while the matrix is compiled.
 - **URL validation** — a visual indicator confirms a valid URL structure and offers one-click test presets (Google, GitHub, Wikipedia, AI Studio).
 
@@ -52,20 +52,22 @@ A fast, private, browser-only QR code generator. Paste a link, style the code, a
 ### Export and sharing
 
 - **Download PNG** — filenames are derived from the destination hostname (for example `github_matrix_750x750.png`).
+- **Download SVG** — the same matrix (colors, quiet zone, and center badge) exported as a scalable vector via `src/utils/qrSvg.ts`.
 - **Copy to clipboard** — copies the PNG image directly; falls back to copying the URL text when image clipboard access is unavailable.
 - **Web Share API** — shares the image file where supported, then falls back to sharing the link, then to copying it.
 
 ### History and privacy
 
 - **Recent history** — the last 5 generated codes are stored in `localStorage` with their colors, size, error correction, and logo settings.
+- **Wi-Fi codes are never saved** — history only stores URL and text codes; Wi-Fi payloads embed the network password, so they are excluded from history (and any previously stored Wi-Fi entries are purged on load).
 - **Restore in one click** — click any history item to reload its exact configuration.
 - **Per-item actions** — copy or share the destination link, remove a single entry, or clear the entire history.
 - **Fully local** — QR codes are generated in the browser with Canvas. Nothing is sent to a server.
 
 ### SEO and accessibility
 
-- Static metadata, Open Graph/Twitter cards, canonical URL, and JSON-LD (`WebApplication` + `FAQPage`).
-- Crawlable below-the-fold content: feature grid, how-to steps, and FAQ.
+- Static metadata, Open Graph/Twitter cards, canonical URL, and JSON-LD (`WebApplication` + `FAQPage`) generated at build time from `src/data/content.ts`.
+- Crawlable below-the-fold content: feature grid, how-to steps, and FAQ — the same copy that feeds the JSON-LD.
 - Semantic landmarks, ARIA labels, keyboard-closable history drawer, and descriptive image alt text.
 
 ---
@@ -82,7 +84,7 @@ A fast, private, browser-only QR code generator. Paste a link, style the code, a
 | Animation | [`motion`](https://motion.dev/) |
 | SEO asset generation | Node.js + [`pngjs`](https://www.npmjs.com/package/pngjs) |
 
-> The app itself is a static client-side SPA. `express`, `dotenv`, and `@google/genai` remain in `package.json` from the original AI Studio scaffold but are **not imported or required at runtime**.
+> The app itself is a static client-side SPA — no server, no API keys, no runtime environment variables. `express`, `dotenv`, `@google/genai`, `esbuild`, `tsx`, and `autoprefixer` were removed from the original AI Studio scaffold; `npm audit` reports 0 vulnerabilities.
 
 ---
 
@@ -90,12 +92,15 @@ A fast, private, browser-only QR code generator. Paste a link, style the code, a
 
 ```text
 qr/
-├── index.html                     # HTML shell, meta tags, OG/Twitter cards, JSON-LD
+├── index.html                     # HTML shell, meta tags, OG/Twitter cards, JSON-LD markers
 ├── metadata.json                  # AI Studio app metadata
-├── package.json                   # Dependencies and scripts
+├── package.json                   # Dependencies and scripts (package-lock.json is the only lockfile)
+├── package-lock.json
 ├── tsconfig.json                  # TypeScript configuration
-├── vite.config.ts                 # Vite + React + Tailwind plugins
+├── vite.config.ts                 # Vite + React + Tailwind plugins, seoJsonLd(), Vitest config
+├── .github/workflows/ci.yml       # CI: npm ci → lint → test → build (push/PR to main)
 ├── .env.example                   # AI Studio environment template (unused by the app)
+├── LICENSE                        # Apache-2.0
 ├── SEO.md                         # SEO implementation notes and launch checklist
 ├── README.md
 ├── public/
@@ -106,18 +111,33 @@ qr/
 │   ├── robots.txt                 # Crawler rules + sitemap reference
 │   └── sitemap.xml                # Single-URL sitemap
 ├── scripts/
-│   └── generate-seo-assets.mjs    # Regenerates favicon, touch icon, and OG image
+│   └── generate-seo-assets.mjs    # Regenerates favicon, touch icon, and OG image (SITE_URL)
 └── src/
     ├── main.tsx                   # React entry point
     ├── index.css                  # Tailwind import, theme fonts, scrollbar styles
-    ├── App.tsx                    # Main UI, state, generation, export, SEO sections
-    ├── types.ts                   # Shared TypeScript interfaces
+    ├── App.tsx                    # State, generation, export, and history logic
+    ├── types.ts                   # Shared TypeScript interfaces (ContentType, WifiConfig, ...)
+    ├── data/
+    │   ├── content.ts             # Single source of truth for features/steps/FAQ + JSON-LD builders
+    │   └── presets.ts             # Color, size, and URL presets
     ├── components/
+    │   ├── SiteHeader.tsx         # Brand, nav, history toggle, theme switcher
+    │   ├── GeneratorPanel.tsx     # Content-type tabs, URL/Text/Wi-Fi forms, colors, sizes, ECC
+    │   ├── PreviewPanel.tsx       # Preview + Download PNG / SVG / Copy / Share actions
+    │   ├── SeoSections.tsx        # Below-the-fold features / how-to / FAQ (from data/content.ts)
+    │   ├── StatusBar.tsx          # Thin status strip
+    │   ├── SiteFooter.tsx         # Brand line and internal anchor links
     │   ├── LogoSelector.tsx       # Preset icons, upload, badge shape/size/color controls
     │   └── HistorySidebar.tsx     # Recent history slide-over drawer
+    ├── test/
+    │   ├── setup.ts               # Vitest setup (in-memory localStorage, jest-dom, cleanup)
+    │   └── fixtures.ts            # Shared test fixtures (Wi-Fi configs, URL input)
     └── utils/
-        ├── qrGenerator.ts         # QR encoding + center badge canvas compositing
-        └── presetLogos.ts         # Preset SVG definitions and contrast helpers
+        ├── qrGenerator.ts         # QR encoding + center badge canvas compositing (PNG)
+        ├── qrSvg.ts               # QR matrix → scalable SVG string (SVG export)
+        ├── qrContent.ts           # Content-type payload building (URL auto-prefix, text, Wi-Fi)
+        ├── presetLogos.ts         # Preset SVG definitions and contrast helpers
+        └── storage.ts             # try/catch-wrapped localStorage get/set/remove
 ```
 
 ---
@@ -127,7 +147,7 @@ qr/
 ### Prerequisites
 
 - **Node.js 20 LTS or newer** (Vite 6 requires Node 18+; 20 LTS is recommended)
-- npm (or pnpm/yarn/bun — the repo ships a `package-lock.json`)
+- npm (`package-lock.json` is the only lockfile in the repo)
 
 ### Install and run
 
@@ -158,10 +178,20 @@ npm run preview   # serves the production build locally
 | `build` | `vite build` | Create an optimized production build in `dist/` |
 | `preview` | `vite preview` | Preview the production build locally |
 | `lint` | `tsc --noEmit` | Type-check the project without emitting files |
+| `test` | `vitest run` | Run the unit and component test suite once |
+| `test:watch` | `vitest` | Run the tests in watch mode |
 | `assets:seo` | `node scripts/generate-seo-assets.mjs` | Regenerate favicon, Apple touch icon, and OG image |
 | `clean` | `rm -rf dist server.js` | Remove build artifacts (requires a POSIX-compatible shell) |
 
-There is no test suite configured.
+### Tests and CI
+
+The suite (Vitest + Testing Library + jsdom) covers the payload builders, the SVG exporter, preset-logo contrast helpers, and component behavior — including that Wi-Fi codes are never written to history and that the app still renders when `localStorage` throws:
+
+```bash
+npm test
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci` → `npm run lint` → `npm test` → `npm run build` on every push and pull request to `main`.
 
 ---
 
@@ -169,7 +199,7 @@ There is no test suite configured.
 
 ### Generation pipeline
 
-1. **Input normalization** — `App.tsx` checks whether the input already starts with `http://` or `https://`. If not, and the input contains a dot, `https://` is prefixed.
+1. **Input normalization** — `buildQrContent()` in `src/utils/qrContent.ts` picks the payload for the active content type: URLs get `https://` prefixed when the protocol is missing, text is encoded raw, and the Wi-Fi form is serialized into a `WIFI:T:...;S:...;P:...;;` payload (with reserved characters escaped).
 2. **Matrix encoding** — `generateQrCode()` in `src/utils/qrGenerator.ts` calls `QRCode.toDataURL()` with the selected size, colors, margin (`3` modules), and error-correction level.
 3. **Logo compositing** — when a logo is active, a canvas of the requested size is created, the base QR is drawn onto it, and a badge is rendered in the center:
    - The badge background clears the modules underneath.
@@ -186,12 +216,14 @@ A logo covers part of the matrix, so the encoder automatically uses **level H (3
 
 ### Persistence
 
+All `localStorage` access goes through the safe wrappers in `src/utils/storage.ts` (`storageGet` / `storageSet` / `storageRemove`), each wrapped in try/catch — storage being blocked, full, or unavailable never breaks the UI.
+
 | Key | Contents |
 |---|---|
 | `hk_qr_theme` | `"light"` or `"dark"` |
 | `hk_qr_history` | JSON array of up to 5 `QrHistoryItem` objects |
 
-History entries store the URL, timestamp, foreground/background colors, size, error-correction level, and full logo configuration. The initial state contains one seeded entry pointing at `https://ai.studio/build` until the user generates their own codes.
+History entries store the content type, payload, timestamp, foreground/background colors, size, error-correction level, and full logo configuration. **Wi-Fi codes are never persisted**: entries typed `wifi` (or legacy entries whose payload starts with `WIFI:`) are skipped on save and purged from existing stored history on load, so network passwords are not kept in the browser. The initial state contains one seeded entry pointing at `https://ai.studio/build` until the user generates their own codes.
 
 ### Contrast helpers
 
@@ -213,7 +245,7 @@ History entries store the URL, timestamp, foreground/background colors, size, er
 
 ### Changing colors or sizes
 
-Preset palettes and export sizes are constants at the top of `src/App.tsx`:
+Preset palettes and export sizes live in `src/data/presets.ts`:
 
 - `FOR_COLOR_PRESETS` — foreground swatches
 - `BACK_COLOR_PRESETS` — background swatches
@@ -234,21 +266,19 @@ Dark mode uses the `dark` class on `<html>` via `@custom-variant dark`.
 
 ## SEO
 
-The repository ships with a complete on-page SEO setup. Before deploying, **replace every `https://example.com` placeholder** with your real production URL (including the trailing slash).
+The repository ships with a complete on-page SEO setup. The production domain is **`https://freesubqr.vercel.app`**, set in four places:
 
-Files that contain the placeholder:
-
-| File | What to update |
+| File | What to update when the domain changes |
 |---|---|
-| `index.html` | `canonical`, `og:url`, `og:image`, `twitter:image`, both JSON-LD blocks |
+| `index.html` | `<link rel="canonical">` (the single source of truth — `og:url`, `og:image`, and `twitter:image` live here too) |
 | `public/robots.txt` | `Sitemap:` URL and the comment |
-| `public/sitemap.xml` | `<loc>` and `<lastmod>` |
+| `public/sitemap.xml` | `<loc>` (and `<lastmod>`) |
 | `scripts/generate-seo-assets.mjs` | `SITE_URL` constant |
 
-Find them all:
+Find every occurrence (PowerShell):
 
 ```powershell
-Select-String -Path index.html,public\robots.txt,public\sitemap.xml,scripts\*.mjs -Pattern "example.com"
+Select-String -Path index.html,public\robots.txt,public\sitemap.xml,scripts\*.mjs -Pattern "freesubqr"
 ```
 
 Then regenerate the social image and icons — the OG image embeds a real QR code of `SITE_URL`:
@@ -257,7 +287,11 @@ Then regenerate the social image and icons — the OG image embeds a real QR cod
 npm run assets:seo
 ```
 
-> **Important:** the FAQ exists in two places — the visible section in `src/App.tsx` and the `FAQPage` JSON-LD in `index.html`. Keep them in sync; Google penalizes structured data that does not match visible content.
+### Structured data and copy
+
+- The crawlable copy — feature grid, how-to steps, and FAQ — lives in **one place**: `src/data/content.ts`.
+- `src/components/SeoSections.tsx` renders that copy on the page.
+- The **`seoJsonLd()` Vite plugin** in `vite.config.ts` reads the same file at build time and injects the `WebApplication` and `FAQPage` JSON-LD blocks between the `JSON-LD:START` / `JSON-LD:END` markers in `index.html`, taking the site URL from the canonical tag. Edit the copy in `content.ts` once and the page and structured data stay in sync automatically — there is no second copy of the FAQ to maintain.
 
 See [`SEO.md`](SEO.md) for the full pre-launch and post-launch checklist (Search Console, Bing, rich results, social previews, Core Web Vitals).
 
@@ -280,15 +314,16 @@ npm run build
 Notes:
 
 - The app is a single page with no client-side router, so no SPA rewrite rules are required.
-- If you deploy under a subpath (for example `https://example.com/qr/`), set Vite's [`base`](https://vite.dev/config/shared-options.html#base) option in `vite.config.ts` and update the absolute asset paths in `index.html`.
-- Remember to update the placeholder domain and rerun `npm run assets:seo` before the first deploy.
+- If you deploy under a subpath (for example `https://your-domain.com/qr/`), set Vite's [`base`](https://vite.dev/config/shared-options.html#base) option in `vite.config.ts` and update the absolute asset paths in `index.html`.
+- After any domain change, update the four files listed in [SEO](#seo) and rerun `npm run assets:seo` before deploying.
 
 ---
 
 ## Privacy
 
 - QR codes are generated locally with the Canvas API; no content is uploaded.
-- The only persisted data is the theme preference and up to five recent history entries, both in `localStorage`.
+- The only persisted data is the theme preference and up to five recent history entries, both in `localStorage` (accessed through failure-proof wrappers — see `src/utils/storage.ts`).
+- **Wi-Fi codes are never saved to history**, so network passwords are not stored in your browser; previously stored Wi-Fi entries are purged on load.
 - History can be cleared at any time from the History drawer.
 - There are no analytics or tracking scripts in the project by default.
 
@@ -322,8 +357,8 @@ Make sure the image is under 5 MB and is a PNG, JPG, SVG, or WebP file. Cross-or
 **The QR code will not scan after heavy customization.**
 Keep a strong contrast between foreground and background, avoid very light foreground colors, and leave a quiet zone around the code. When a logo is enabled, level H is enforced automatically.
 
-**Social previews show the placeholder domain.**
-Update `https://example.com` in `index.html`, then run `npm run assets:seo` and redeploy.
+**Social previews show the wrong domain.**
+Make sure the canonical/`og:url` in `index.html`, `public/robots.txt`, `public/sitemap.xml`, and `SITE_URL` in `scripts/generate-seo-assets.mjs` all match, then run `npm run assets:seo` and redeploy.
 
 **Type errors after changing dependencies.**
 Run `npm run lint` (`tsc --noEmit`) to see the full diagnostics.
@@ -334,7 +369,7 @@ Run `npm run lint` (`tsc --noEmit`) to see the full diagnostics.
 
 1. Fork the repository.
 2. Create a feature branch: `git checkout -b feature/my-change`.
-3. Make your changes and run `npm run lint` and `npm run build`.
+3. Make your changes and run `npm run lint`, `npm test`, and `npm run build` (the same checks CI runs).
 4. Open a pull request with a clear description of the change.
 
 Please keep the existing design language, TypeScript types, and accessibility attributes consistent with the rest of the codebase.
@@ -343,7 +378,7 @@ Please keep the existing design language, TypeScript types, and accessibility at
 
 ## License
 
-Source files carry the **Apache-2.0** SPDX identifier (`SPDX-License-Identifier: Apache-2.0`) in their headers. Add a `LICENSE` file if you plan to redistribute the project.
+Licensed under the **Apache License, Version 2.0** — see [`LICENSE`](LICENSE) for the full text. Source files carry the matching `SPDX-License-Identifier: Apache-2.0` header.
 
 ---
 
