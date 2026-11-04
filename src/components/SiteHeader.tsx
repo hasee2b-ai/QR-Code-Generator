@@ -69,7 +69,7 @@ export default function SiteHeader({
 
       <div className="flex items-center gap-3 sm:gap-4">
         <div className="hidden sm:block text-[11px] font-mono text-neutral-400 dark:text-neutral-500 font-semibold tracking-wider">
-          v4.0.2 // STABLE
+          v{__APP_VERSION__} // STABLE
         </div>
 
         {/* History Drawer Toggle Button */}

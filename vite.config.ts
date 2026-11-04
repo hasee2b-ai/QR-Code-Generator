@@ -1,9 +1,15 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import {readFileSync} from 'node:fs';
 import path from 'path';
 import {type Plugin} from 'vite';
 import {defineConfig} from 'vitest/config';
 import {buildFaqPageJsonLd, buildWebApplicationJsonLd} from './src/data/content';
+
+/** App version, injected into the client as `__APP_VERSION__`. */
+const pkg = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf8')) as {
+  version: string;
+};
 
 /**
  * Injects JSON-LD built from src/data/content.ts into the region between the
@@ -53,6 +59,10 @@ function seoJsonLd(): Plugin {
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss(), seoJsonLd()],
+    // Exposes the package.json version to the client (see src/vite-env.d.ts).
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

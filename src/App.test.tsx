@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import App from "./App";
 import { QrHistoryItem } from "./types";
+
+const pkg = JSON.parse(readFileSync(path.resolve(process.cwd(), "package.json"), "utf8")) as {
+  version: string;
+};
 
 const urlHistoryEntry: QrHistoryItem = {
   id: "u1",
@@ -38,6 +44,12 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /^svg$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^copy$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^share$/i })).toBeInTheDocument();
+
+    // The header badge shows the real package version, injected via `define`.
+    expect(
+      screen.getByText(new RegExp(`^v${pkg.version.replace(/\./g, "\\.")} // STABLE$`))
+    ).toBeInTheDocument();
+    expect(screen.getByText("License: Apache-2.0")).toBeInTheDocument();
   });
 
   it("starts with the production URL and an empty history", async () => {
