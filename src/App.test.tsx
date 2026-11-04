@@ -228,6 +228,37 @@ describe("App", () => {
     expect(screen.queryByText(/WIFI:/)).not.toBeInTheDocument();
   });
 
+  it("says the password is included when a Wi-Fi share falls back to the clipboard", async () => {
+    localStorage.clear();
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /wi-fi content type/i }));
+    fireEvent.change(screen.getByLabelText("Network name (SSID)"), {
+      target: { value: "HomeNetwork" },
+    });
+    fireEvent.change(screen.getByLabelText("Network password"), {
+      target: { value: "hunter2" },
+    });
+    await waitForFreshPreview(null);
+
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+
+    // jsdom has no Web Share API, so this takes the clipboard fallback path.
+    fireEvent.click(screen.getByRole("button", { name: /^share$/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(/includes your network password/i).length
+      ).toBeGreaterThan(0);
+    });
+    // The copied payload is the Wi-Fi join string, password included.
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("WIFI:"));
+  });
+
   it("still renders when Storage reads and writes throw", () => {
     const getItemSpy = vi
       .spyOn(Storage.prototype, "getItem")

@@ -54,7 +54,7 @@ export function generateQrSvg(options: GenerateQrSvgOptions): string {
 
   const parts: string[] = [];
   parts.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${total} ${total}" shape-rendering="crispEdges">`
+    `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${size}" height="${size}" viewBox="0 0 ${total} ${total}" shape-rendering="crispEdges">`
   );
   parts.push(`<rect width="${total}" height="${total}" fill="${escapeXml(bgColor)}"/>`);
   parts.push(`<path d="${buildModulePath(matrix.size, (r, c) => matrix.get(r, c))}" fill="${escapeXml(qrColor)}"/>`);
@@ -105,8 +105,11 @@ export function generateQrSvg(options: GenerateQrSvgOptions): string {
     const iconY = y + padding;
 
     parts.push(badgeShape);
+    // href is the SVG2 form; xlink:href keeps older editors (and renderers
+    // that predate SVG2) able to open the embedded badge image.
+    const logoSrc = escapeXml(logo.src);
     parts.push(
-      `<image href="${escapeXml(logo.src)}" x="${iconX}" y="${iconY}" width="${iconSize}" height="${iconSize}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})"/>`
+      `<image href="${logoSrc}" xlink:href="${logoSrc}" x="${iconX}" y="${iconY}" width="${iconSize}" height="${iconSize}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${clipId})"/>`
     );
   }
 

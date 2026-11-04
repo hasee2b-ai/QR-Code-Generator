@@ -414,6 +414,12 @@ export default function App() {
     const shareText = isLink
       ? `QR Code pointing to ${shareUrl}`
       : `QR Code: ${content}`;
+    // Clipboard fallback copy: a Wi-Fi payload embeds the network password,
+    // so say that explicitly instead of a generic "copied" note.
+    const copiedMessage =
+      contentType === "wifi"
+        ? "Wi-Fi join payload copied to clipboard — it includes your network password!"
+        : `${isLink ? "Link" : "Content"} copied to clipboard!`;
 
     try {
       const file = dataURLtoFile(qrDataUrl, fileName);
@@ -449,9 +455,7 @@ export default function App() {
       await navigator.clipboard.writeText(shareUrl || content);
       recordHistory();
       setShareStatus("copied");
-      setShareFeedback(
-        `Web Share unsupported on this browser. ${isLink ? "Link" : "Content"} copied to clipboard!`
-      );
+      setShareFeedback(`Web Share unsupported on this browser. ${copiedMessage}`);
       setTimeout(() => {
         setShareStatus("idle");
         setShareFeedback(null);
@@ -466,7 +470,7 @@ export default function App() {
         await navigator.clipboard.writeText(shareUrl || content);
         recordHistory();
         setShareStatus("copied");
-        setShareFeedback(`${isLink ? "Link" : "Content"} copied to clipboard!`);
+        setShareFeedback(copiedMessage);
         setTimeout(() => {
           setShareStatus("idle");
           setShareFeedback(null);

@@ -65,10 +65,14 @@ describe("generateQrSvg", () => {
 
     expect(svg).toContain("<clipPath");
     expect(svg).toContain('rx="');
-    expect(svg).toContain('<image href="');
-    // user-provided data URIs must be XML-escaped
+    // href (SVG2) plus xlink:href for older editors, both XML-escaped
+    expect(svg).toContain('xmlns:xlink="http://www.w3.org/1999/xlink"');
+    expect(svg).toMatch(
+      /<image href="data:image\/png;base64,AAAA&amp;BBB" xlink:href="data:image\/png;base64,AAAA&amp;BBB"/
+    );
     expect(svg).toContain("AAAA&amp;BBB");
     expect(svg).not.toContain('href="data:image/png;base64,AAAA&BBB"');
+    expect(svg).not.toContain('xlink:href="data:image/png;base64,AAAA&BBB"');
   });
 
   it("renders a circular badge for the circle shape", () => {
