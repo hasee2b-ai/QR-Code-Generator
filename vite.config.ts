@@ -79,6 +79,27 @@ export default defineConfig(() => {
       environment: 'jsdom',
       globals: true,
       setupFiles: ['./src/test/setup.ts'],
+      // Instrumented (coverage) runs are slower than plain runs.
+      testTimeout: 30000,
+      coverage: {
+        provider: 'v8' as const,
+        reporter: ['text', 'html', 'json-summary'],
+        include: ['src/**/*.{ts,tsx}'],
+        exclude: [
+          'src/**/*.test.{ts,tsx}',
+          'src/test/**',
+          'src/vite-env.d.ts',
+          'src/main.tsx',
+        ],
+        // Thresholds set from the measured run (60.52% stmts, 56.27% branch,
+        // 54% funcs, 62.61% lines) — each sits below its measurement.
+        thresholds: {
+          statements: 58,
+          branches: 54,
+          functions: 52,
+          lines: 60,
+        },
+      },
     },
   };
 });
