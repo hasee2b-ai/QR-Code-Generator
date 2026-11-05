@@ -178,8 +178,8 @@ async function generate() {
   // Typography (right)
   const tx = 620;
   drawBrandMark(og, tx, 96, 56);
-  drawText(og, "HK QR", tx, 196, 16, INK);
-  fillRect(og, tx, 336, textWidth("HK QR", 16), 8, INK);
+  drawText(og, "FREESUBQR", tx, 196, 16, INK);
+  fillRect(og, tx, 336, textWidth("FREESUBQR", 16), 8, INK);
   drawText(og, "FREE QR CODE", tx, 384, 7, INK);
   drawText(og, "GENERATOR", tx, 444, 7, INK);
 
