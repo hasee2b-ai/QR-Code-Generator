@@ -245,12 +245,13 @@ export default function PreviewPanel({
       {qrDataUrl && (
         <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-neutral-950/95 backdrop-blur border-t border-neutral-900/10 dark:border-neutral-800 px-4 py-2 flex items-center gap-3">
           <div className="w-12 h-12 border border-neutral-900 dark:border-neutral-100 flex-shrink-0 bg-white" style={{ backgroundColor: bgColor }}>
-            <img src={qrDataUrl} alt={`QR code for ${previewLabel}`} className="w-full h-full object-contain p-0.5" />
+            <img src={qrDataUrl} alt="QR code thumbnail" className="w-full h-full object-contain p-0.5" />
           </div>
           <button
             id="download-qr-btn-mobile"
             onClick={onDownload}
             disabled={!canExport}
+            aria-label="Download QR code (mobile bar)"
             className={`flex-1 px-4 py-2.5 font-bold uppercase tracking-wider text-xs font-mono flex items-center justify-center gap-1.5 rounded-none transition-all ${primaryButtonClass}`}
             title="Download PNG image file"
           >

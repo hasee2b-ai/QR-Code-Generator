@@ -125,6 +125,10 @@ export default function SiteHeader({
       </nav>
 
       <div className="flex items-center gap-3 sm:gap-4">
+        <div className="hidden sm:block text-[11px] font-mono text-neutral-600 dark:text-neutral-400 font-semibold tracking-wider">
+          v{__APP_VERSION__} // STABLE
+        </div>
+
         {/* History Drawer Toggle Button */}
         <button
           id="history-toggle-button"
