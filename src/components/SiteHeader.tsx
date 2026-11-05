@@ -93,7 +93,7 @@ export default function SiteHeader({
         </div>
         <div>
           <span className="text-xl font-bold tracking-tight text-neutral-900 dark:text-white uppercase font-display">
-            HK QR
+            FREESUBQR
           </span>
         </div>
       </div>
