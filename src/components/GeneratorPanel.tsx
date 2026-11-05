@@ -1,8 +1,9 @@
 import { useId } from "react";
-import { Check, Globe, Trash2, History, Link2, Type, Wifi } from "lucide-react";
+import { Check, Globe, Trash2, History, Link2, Type, Wifi, TriangleAlert } from "lucide-react";
 import LogoSelector from "./LogoSelector";
 import { ContentType, ErrorCorrectionLevel, LogoConfig, WifiConfig } from "../types";
 import { BACK_COLOR_PRESETS, FOR_COLOR_PRESETS, SIZE_PRESETS, TEST_PRESETS } from "../data/presets";
+import { getContrastRatio, getLuminance } from "../utils/presetLogos";
 import { isValidUrl } from "../utils/qrContent";
 
 interface GeneratorPanelProps {
@@ -87,6 +88,15 @@ export default function GeneratorPanel({
   const needsProtocol = contentType === "url" && !!url && !/^https?:\/\//i.test(url);
   const urlIsValid = contentType === "url" && isValidUrl(url);
 
+  /**
+   * Scanability guard: QR scanners are tuned for dark blocks on a light base,
+   * so warn when the pattern/background pair is low contrast (below 3:1) or
+   * inverted (pattern lighter than background).
+   */
+  const contrastRatio = getContrastRatio(qrColor, bgColor);
+  const patternIsInverted = getLuminance(qrColor) > getLuminance(bgColor);
+  const showContrastWarning = contrastRatio < 3 || patternIsInverted;
+
   const hasInputValue =
     contentType === "url" ? !!url : contentType === "text" ? !!text : !!(wifi.ssid || wifi.password);
 
@@ -96,7 +106,7 @@ export default function GeneratorPanel({
         <button
           type="button"
           onClick={onOpenHistory}
-          className="text-[10px] font-bold text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1 cursor-pointer"
+          className="text-xs font-bold text-neutral-700 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1 cursor-pointer"
           title="View recent generated codes"
         >
           <History className="w-3 h-3" />
@@ -107,7 +117,7 @@ export default function GeneratorPanel({
         <button
           type="button"
           onClick={onClearInput}
-          className="text-[10px] font-bold text-neutral-400 hover:text-neutral-900 dark:text-neutral-500 dark:hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1.5 cursor-pointer"
+          className="text-xs font-bold text-neutral-700 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1.5 cursor-pointer"
         >
           <Trash2 className="w-3.5 h-3.5" />
           Clear Input
@@ -125,13 +135,13 @@ export default function GeneratorPanel({
       <div className="max-w-xl w-full mx-auto pb-12 lg:pb-16">
 
         {/* Title / Hero section strictly following theme design */}
-        <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 block">
+        <span className="text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest mb-2 block">
           Free · Instant · No Sign-up
         </span>
         <h1 className="text-4xl sm:text-5xl font-black text-neutral-900 dark:text-white leading-none mb-4 uppercase tracking-tight italic font-display" style={{ wordSpacing: "0.1em" }}>
           Free QR Code<br />Generator
         </h1>
-        <p className="text-neutral-500 dark:text-neutral-400 mb-10 leading-relaxed text-sm sm:text-base">
+        <p className="text-neutral-700 dark:text-neutral-400 mb-10 leading-relaxed text-sm sm:text-base">
           Turn any link into a scannable QR code in seconds. Customize colors, size and error
           correction, add your logo, then download a print-ready PNG up to 3000&nbsp;×&nbsp;3000&nbsp;px.
           Free and private — everything is generated locally in your browser.
@@ -144,7 +154,7 @@ export default function GeneratorPanel({
           <div className="space-y-2">
             <span
               id={contentTypeLabelId}
-              className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+              className="block text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest"
             >
               Content Type
             </span>
@@ -164,10 +174,10 @@ export default function GeneratorPanel({
                     onClick={() => onContentTypeChange(type.id)}
                     aria-pressed={isSelected}
                     aria-label={`${type.label} content type`}
-                    className={`flex-1 py-2 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    className={`flex-1 py-2 text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                       isSelected
                         ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]"
-                        : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+                        : "text-neutral-700 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
@@ -184,7 +194,7 @@ export default function GeneratorPanel({
               <div className="flex items-center justify-between mb-2">
                 <label
                   htmlFor={urlInputId}
-                  className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+                  className="block text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest"
                 >
                   Source Destination URL
                 </label>
@@ -192,7 +202,7 @@ export default function GeneratorPanel({
               </div>
 
               <div className="relative">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-neutral-400 dark:text-neutral-500">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-neutral-700 dark:text-neutral-400">
                   <Globe className="w-4 h-4" />
                 </div>
                 <input
@@ -213,9 +223,9 @@ export default function GeneratorPanel({
               </div>
 
               {/* Sub-label information block */}
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
                 {needsProtocol ? (
-                  <span className="text-neutral-500 dark:text-neutral-400 font-semibold bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 border border-neutral-200 dark:border-neutral-700">
+                  <span className="text-neutral-700 dark:text-neutral-400 font-semibold bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 border border-neutral-200 dark:border-neutral-700">
                     Auto-Protocol Prefix: <code className="text-neutral-900 dark:text-white">https://{url}</code>
                   </span>
                 ) : urlIsValid ? (
@@ -223,21 +233,21 @@ export default function GeneratorPanel({
                     <Check className="w-3.5 h-3.5" /> Destination Valid
                   </span>
                 ) : (
-                  <span className="text-neutral-400 dark:text-neutral-500 font-medium">Ready for real-time compilation</span>
+                  <span className="text-neutral-700 dark:text-neutral-400 font-medium">Ready for real-time compilation</span>
                 )}
 
                 {/* Preset quick buttons */}
                 <div className="flex items-center gap-1.5">
-                  <span className="text-neutral-400 dark:text-neutral-500 font-semibold uppercase text-[9px] tracking-wider">Presets:</span>
+                  <span className="text-neutral-700 dark:text-neutral-400 font-semibold uppercase text-xs tracking-wider">Presets:</span>
                   <div className="flex gap-1">
                     {TEST_PRESETS.map((p) => (
                       <button
                         key={p.label}
                         onClick={() => onUrlChange(p.url)}
-                        className={`px-1.5 py-0.5 border text-[9px] font-bold uppercase transition-all rounded-none cursor-pointer ${
+                        className={`px-1.5 py-0.5 border text-xs font-bold uppercase transition-all rounded-none cursor-pointer ${
                           url === p.url
                             ? "bg-neutral-900 dark:bg-white border-neutral-900 dark:border-white text-white dark:text-neutral-900 shadow-[1px_1px_0px_rgba(0,0,0,1)] dark:shadow-[1px_1px_0px_rgba(255,255,255,1)]"
-                            : "bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:border-neutral-900 dark:hover:border-neutral-200 hover:text-neutral-900 dark:hover:text-white"
+                            : "bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-400 hover:border-neutral-900 dark:hover:border-neutral-200 hover:text-neutral-900 dark:hover:text-white"
                         }`}
                       >
                         {p.label}
@@ -255,7 +265,7 @@ export default function GeneratorPanel({
               <div className="flex items-center justify-between mb-2">
                 <label
                   htmlFor={textInputId}
-                  className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+                  className="block text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest"
                 >
                   Text Content
                 </label>
@@ -271,8 +281,8 @@ export default function GeneratorPanel({
                 className="w-full px-4 py-4 bg-white dark:bg-neutral-950 border-2 border-neutral-900 dark:border-neutral-200 font-mono text-sm focus:outline-none focus:ring-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.7)] rounded-none text-neutral-900 dark:text-white placeholder:text-neutral-300 dark:placeholder:text-neutral-600 transition-all duration-200 resize-y"
               />
 
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
-                <span className="text-neutral-400 dark:text-neutral-500 font-medium">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                <span className="text-neutral-700 dark:text-neutral-400 font-medium">
                   {text.length} character{text.length === 1 ? "" : "s"} // Encodes raw text into the matrix
                 </span>
               </div>
@@ -286,7 +296,7 @@ export default function GeneratorPanel({
                 <label
                   id={wifiSectionLabelId}
                   htmlFor={ssidInputId}
-                  className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+                  className="block text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest"
                 >
                   Wi-Fi Network
                 </label>
@@ -318,7 +328,7 @@ export default function GeneratorPanel({
                   <div>
                     <span
                       id={securityLabelId}
-                      className="block text-[9px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1.5"
+                      className="block text-xs font-mono font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest mb-1.5"
                     >
                       Security
                     </span>
@@ -341,7 +351,7 @@ export default function GeneratorPanel({
                               })
                             }
                             aria-pressed={isSelected}
-                            className={`py-1.5 text-[9px] font-mono font-bold uppercase transition-all border cursor-pointer ${
+                            className={`py-1.5 text-xs font-mono font-bold uppercase transition-all border cursor-pointer ${
                               isSelected
                                 ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
                                 : "bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-neutral-900 dark:hover:border-neutral-300"
@@ -357,7 +367,7 @@ export default function GeneratorPanel({
                   <div role="group" aria-labelledby={hiddenNetworkLabelId}>
                     <span
                       id={hiddenNetworkLabelId}
-                      className="block text-[9px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1.5"
+                      className="block text-xs font-mono font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest mb-1.5"
                     >
                       Hidden Network
                     </span>
@@ -366,7 +376,7 @@ export default function GeneratorPanel({
                       role="switch"
                       aria-checked={wifi.hidden}
                       onClick={() => onWifiChange({ ...wifi, hidden: !wifi.hidden })}
-                      className={`w-full py-1.5 px-3 text-[9px] font-mono font-bold uppercase transition-all border cursor-pointer flex items-center justify-between gap-2 ${
+                      className={`w-full py-1.5 px-3 text-xs font-mono font-bold uppercase transition-all border cursor-pointer flex items-center justify-between gap-2 ${
                         wifi.hidden
                           ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
                           : "bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-neutral-900 dark:hover:border-neutral-300"
@@ -384,8 +394,8 @@ export default function GeneratorPanel({
                   </div>
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono">
-                  <span className="text-neutral-400 dark:text-neutral-500 font-medium">
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                  <span className="text-neutral-700 dark:text-neutral-400 font-medium">
                     {wifi.ssid.trim()
                       ? wifi.security === "nopass"
                         ? "Open network // Scanning connects without a password"
@@ -404,7 +414,7 @@ export default function GeneratorPanel({
           <div className="space-y-2">
             <label
               htmlFor={qrColorInputId}
-              className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+              className="block text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest"
             >
               Matrix Block Color
             </label>
@@ -449,7 +459,7 @@ export default function GeneratorPanel({
           <div className="space-y-2">
             <label
               htmlFor={bgColorInputId}
-              className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+              className="block text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest"
             >
               Pattern Background
             </label>
@@ -492,16 +502,35 @@ export default function GeneratorPanel({
 
         </div>
 
+        {/* Low-contrast / inverted pattern warning (announced politely) */}
+        {showContrastWarning && (
+          <div
+            role="status"
+            data-testid="low-contrast-warning"
+            className="flex items-start gap-2 border-2 border-amber-700/50 dark:border-amber-400/50 bg-amber-100 dark:bg-amber-900/40 px-3 py-2 text-xs font-mono text-neutral-900 dark:text-neutral-100"
+          >
+            <TriangleAlert className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span>
+              Low scan reliability: the pattern and background contrast is only{" "}
+              {contrastRatio.toFixed(1)}:1 (3:1 minimum) and most readers expect
+              darker blocks on a lighter background.{" "}
+              {patternIsInverted
+                ? "The pattern is lighter than the background — most scanners read dark blocks on a light base."
+                : ""}
+            </span>
+          </div>
+        )}
+
           {/* Sizing Export Standard (Brutalist blocks) */}
           <div className="space-y-2 pt-4 border-t border-neutral-900/10 dark:border-neutral-800">
             <div className="flex justify-between items-center mb-2">
               <span
                 id={sizeLabelId}
-                className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+                className="block text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest"
               >
                 Export Grid Scale
               </span>
-              <span className="text-[10px] font-mono font-bold text-neutral-900 dark:text-neutral-100 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 px-2 py-0.5">
+              <span className="text-xs font-mono font-bold text-neutral-900 dark:text-neutral-100 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 px-2 py-0.5">
                 {size} × {size} px (PNG + SVG)
               </span>
             </div>
@@ -522,8 +551,8 @@ export default function GeneratorPanel({
                         : "bg-white dark:bg-neutral-800/80 border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 hover:border-neutral-900 dark:hover:border-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-750"
                     }`}
                   >
-                    <div className="text-[11px] font-black tracking-tight">{preset.label}</div>
-                    <div className={`text-[9px] font-mono mt-1 ${isSelected ? "text-neutral-300 dark:text-neutral-600" : "text-neutral-400 dark:text-neutral-500"}`}>
+                    <div className="text-xs font-black tracking-tight">{preset.label}</div>
+                    <div className={`text-xs font-mono mt-1 ${isSelected ? "text-neutral-300 dark:text-neutral-800" : "text-neutral-700 dark:text-neutral-400"}`}>
                       {preset.value}px
                     </div>
                   </button>
@@ -536,7 +565,7 @@ export default function GeneratorPanel({
           <div className="space-y-2 pt-4 border-t border-neutral-900/10 dark:border-neutral-800">
             <span
               id={errorCorrectionLabelId}
-              className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1"
+              className="block text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest mb-1"
             >
               Redundancy Error Correction
             </span>
@@ -559,18 +588,18 @@ export default function GeneratorPanel({
                   <button
                     key={level}
                     onClick={() => onErrorCorrectionChange(level)}
-                    className={`py-2 text-[10px] font-bold transition-all text-center rounded-none uppercase cursor-pointer ${
+                    className={`py-2 text-xs font-bold transition-all text-center rounded-none uppercase cursor-pointer ${
                       isSelected
                         ? "bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white border border-neutral-900 dark:border-neutral-500 shadow-[1px_1px_0px_rgba(0,0,0,0.15)] dark:shadow-[1px_1px_0px_rgba(255,255,255,0.15)]"
-                        : "text-neutral-400 dark:text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200"
+                        : "text-neutral-700 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
                     }`}
                   >
-                    {details.title} <span className="font-medium text-[9px]">({details.pct})</span>
+                    {details.title} <span className="font-medium text-xs">({details.pct})</span>
                   </button>
                 );
               })}
             </div>
-            <p className="text-[10px] text-neutral-400 dark:text-neutral-500 leading-normal font-medium">
+            <p className="text-xs text-neutral-700 dark:text-neutral-400 leading-normal font-medium">
               Level H protects your output with 30% redundancy blocks, ensuring scans work flawlessly even if partially covered or printed on uneven material.
             </p>
           </div>

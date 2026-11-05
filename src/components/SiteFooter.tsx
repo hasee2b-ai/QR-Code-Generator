@@ -3,7 +3,7 @@ export default function SiteFooter() {
   return (
     <footer
       aria-label="Site footer"
-      className="border-t border-neutral-900/10 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 px-6 sm:px-12 py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] font-mono uppercase tracking-widest text-neutral-400 dark:text-neutral-500 transition-colors"
+      className="border-t border-neutral-900/10 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 px-6 sm:px-12 py-8 pb-20 lg:pb-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono uppercase tracking-widest text-neutral-700 dark:text-neutral-400 transition-colors"
     >
       <div className="flex items-center gap-2.5">
         <span aria-hidden="true" className="w-3 h-3 border-2 border-neutral-900 dark:border-white inline-block" />

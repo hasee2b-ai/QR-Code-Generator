@@ -128,7 +128,7 @@ export default function HistorySidebar({
                     >
                       Recent History
                     </h2>
-                    <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500 uppercase tracking-widest block">
+                    <span className="text-xs font-mono text-neutral-700 dark:text-neutral-400 uppercase tracking-widest block">
                       Last 5 Generated Codes ({history.length}/5)
                     </span>
                   </div>
@@ -149,12 +149,12 @@ export default function HistorySidebar({
                 {history.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-neutral-300 dark:border-neutral-700">
                     <div className="w-12 h-12 border-2 border-neutral-900 dark:border-neutral-300 flex items-center justify-center mb-3">
-                      <QrCode className="w-6 h-6 text-neutral-400 dark:text-neutral-500" />
+                      <QrCode className="w-6 h-6 text-neutral-700 dark:text-neutral-400" />
                     </div>
                     <p className="text-xs font-bold text-neutral-900 dark:text-white uppercase tracking-wider mb-1">
                       No Records Yet
                     </p>
-                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 max-w-[220px] font-mono leading-relaxed">
+                    <p className="text-xs text-neutral-700 dark:text-neutral-400 max-w-[220px] font-mono leading-relaxed">
                       Generated destination URLs will automatically be preserved here for instant reloading.
                     </p>
                   </div>
@@ -177,16 +177,16 @@ export default function HistorySidebar({
                           {/* Top Row: Index & Timestamp */}
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                              <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 uppercase">
+                              <span className="px-1.5 py-0.5 text-xs font-mono font-bold bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 uppercase">
                                 0{index + 1}
                               </span>
-                              <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500">
+                              <span className="text-xs font-mono text-neutral-700 dark:text-neutral-400">
                                 {formatRelativeTime(item.timestamp)}
                               </span>
                             </div>
 
                             {isCurrent && (
-                              <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-1.5 py-0.5 border border-emerald-300 dark:border-emerald-700">
+                              <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-1.5 py-0.5 border border-emerald-300 dark:border-emerald-700">
                                 Active Code
                               </span>
                             )}
@@ -203,7 +203,7 @@ export default function HistorySidebar({
                           </div>
 
                           {/* Metadata row: Color swatches & specs */}
-                          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800 text-[10px] font-mono text-neutral-500 dark:text-neutral-400">
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-200 dark:border-neutral-800 text-xs font-mono text-neutral-700 dark:text-neutral-400">
                             <div className="flex items-center gap-2">
                               <div className="flex items-center gap-1">
                                 <span
@@ -221,7 +221,7 @@ export default function HistorySidebar({
                               <span>•</span>
                               <span>ECC {item.errorCorrection}</span>
                               {item.logo?.enabled && (
-                                <span className="px-1 py-0.2 bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-[9px] uppercase font-mono border border-neutral-300 dark:border-neutral-700">
+                                <span className="px-1 py-0.2 bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 text-xs uppercase font-mono border border-neutral-300 dark:border-neutral-700">
                                   +Badge
                                 </span>
                               )}
@@ -233,7 +233,7 @@ export default function HistorySidebar({
                                 type="button"
                                 onClick={(e) => handleShareUrl(e, item)}
                                 title="Share destination link"
-                                className="p-1 text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                                className="p-1 text-neutral-700 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                               >
                                 <Share2 className="w-3.5 h-3.5" />
                               </button>
@@ -242,10 +242,10 @@ export default function HistorySidebar({
                                 type="button"
                                 onClick={(e) => handleCopyUrl(e, item)}
                                 title="Copy destination link"
-                                className="p-1 text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                                className="p-1 text-neutral-700 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                               >
                                 {copiedId === item.id ? (
-                                  <span className="flex items-center gap-1 text-emerald-600 font-bold text-[9px]">
+                                  <span className="flex items-center gap-1 text-emerald-700 font-bold text-xs">
                                     <Check className="w-3 h-3" />
                                     Copied
                                   </span>
@@ -261,12 +261,12 @@ export default function HistorySidebar({
                                   onRemove(item.id);
                                 }}
                                 title="Remove from history"
-                                className="p-1 text-neutral-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                                className="p-1 text-neutral-700 hover:text-red-600 dark:hover:text-red-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
 
-                              <span className="ml-1 text-[9px] font-bold text-neutral-900 dark:text-white group-hover:translate-x-0.5 transition-transform flex items-center">
+                              <span className="ml-1 text-xs font-bold text-neutral-900 dark:text-white group-hover:translate-x-0.5 transition-transform flex items-center">
                                 <ArrowRight className="w-3 h-3" />
                               </span>
                             </div>
@@ -281,13 +281,13 @@ export default function HistorySidebar({
               {/* Footer info & Clear button */}
               {history.length > 0 && (
                 <div className="p-4 border-t-2 border-neutral-900/10 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500">
+                  <span className="text-xs font-mono text-neutral-700 dark:text-neutral-400">
                     Click any item to reload
                   </span>
                   <button
                     id="clear-all-history-btn"
                     onClick={onClear}
-                    className="flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 hover:text-red-600 dark:text-neutral-400 dark:hover:text-red-400 transition-colors cursor-pointer"
+                    className="flex items-center gap-1 text-xs font-mono font-bold uppercase tracking-wider text-neutral-700 hover:text-red-600 dark:text-neutral-400 dark:hover:text-red-400 transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-3 h-3" />
                     Clear History

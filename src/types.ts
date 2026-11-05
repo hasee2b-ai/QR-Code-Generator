@@ -25,6 +25,12 @@ export interface LogoConfig {
   shape: LogoShape;
   paddingRatio: number; // e.g. 0.18
   bgColor?: string; // custom or background color
+  /**
+   * How `bgColor` is picked: synced to the QR pattern background, or a fixed
+   * color the user chose (so it survives later pattern changes). Absent on
+   * history entries from older versions — App infers the mode on restore.
+   */
+  badgeBgMode?: "pattern" | "custom";
   iconColor?: string; // custom preset icon color or 'auto'
 }
 

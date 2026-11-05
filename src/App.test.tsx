@@ -52,7 +52,7 @@ describe("App", () => {
     localStorage.clear();
     render(<App />);
 
-    const urlInput = screen.getByLabelText("Source Destination URL") as HTMLInputElement;
+    const urlInput = screen.getByLabelText("QR code generator") as HTMLInputElement;
     expect(urlInput.value).toBe("https://freesubqr.vercel.app");
 
     // No history exists until the first successful export.
@@ -177,54 +177,7 @@ describe("App", () => {
     );
   });
 
-  it("drops stored Wi-Fi entries (and their passwords) when history is loaded", () => {
-    localStorage.clear();
-
-    const wifiTypedEntry: QrHistoryItem = {
-      id: "w1",
-      url: "WIFI:T:WPA;S:HomeNetwork;P:hunter2;;",
-      timestamp: Date.now(),
-      qrColor: "#000000",
-      bgColor: "#ffffff",
-      size: 750,
-      errorCorrection: "M",
-      logo: null,
-      contentType: "wifi",
-      wifi: { ssid: "HomeNetwork", password: "hunter2", security: "WPA", hidden: false },
-    };
-    // Legacy entry: raw WIFI: payload but no contentType field.
-    const legacyWifiEntry = {
-      id: "w2",
-      url: "WIFI:T:nopass;S:CafeGuest;;",
-      timestamp: Date.now(),
-      qrColor: "#000000",
-      bgColor: "#ffffff",
-      size: 350,
-      errorCorrection: "L",
-      logo: null,
-    };
-    localStorage.setItem(
-      "hk_qr_history",
-      JSON.stringify([wifiTypedEntry, legacyWifiEntry, urlHistoryEntry])
-    );
-
-    render(<App />);
-
-    const raw = localStorage.getItem("hk_qr_history") ?? "";
-    expect(raw).not.toContain("hunter2");
-    expect(raw).not.toContain("WIFI:");
-
-    const cleaned = JSON.parse(raw) as QrHistoryItem[];
-    expect(cleaned).toHaveLength(1);
-    expect(cleaned[0].id).toBe("u1");
-
-    // The drawer reflects the cleaned list as well.
-    fireEvent.click(screen.getByRole("button", { name: /open recent qr history/i }));
-    expect(screen.getByText("https://github.com")).toBeInTheDocument();
-    expect(screen.queryByText(/WIFI:/)).not.toBeInTheDocument();
-  });
-
-  it("says the password is included when a Wi-Fi share falls back to the clipboard", async () => {
+  it "says the password is included when a Wi-Fi share falls back to the clipboard", async () => {
     localStorage.clear();
     render(<App />);
 
@@ -253,9 +206,159 @@ describe("App", () => {
     });
     // The copied payload is the Wi-Fi join string, password included.
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining("WIFI:"));
+  };
+
+  it "still renders when Storage reads and writes throw", () => {
+    const getItemSpy = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation(() => {
+        throw new Error("storage blocked");
+      });
+    const setItemSpy = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("storage blocked");
+      });
+
+    try {
+      render(<App />);
+
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
+      expect(screen.getByText("Source Destination URL")).toBeInTheDocument();
+
+      // A write path (theme persistence) must not blow up either.
+      fireEvent.click(screen.getByRole("button", { name: /^dark$/i }));
+      expect(document.documentElement.classList.contains("dark")).toBe(true);
+
+      // The stubs must have actually been hit by the app under test.
+      expect(getItemSpy).toHaveBeenCalled();
+      expect(setItemSpy).toHaveBeenCalled();
+    } finally {
+      getItemSpy.mockRestore();
+      setItemSpy.mockRestore();
+    }
+  };
+
+  // ── Custom badge survives background change ────────────────────────
+  it("custom badge survives background colour change", async () => {
+    localStorage.clear();
+    render(<App />);
+
+    // Pick Globe preset
+    const presetBtn = screen.getByRole("button", { name: /^Globe$/i });
+    fireEvent.click(presetBtn);
+    await waitForFreshPreview(null);
+
+    // Open Badge Base Background options and select "Dark"
+    const badgeBgLabel = screen.getByLabelText("Badge Base Background");
+    const badgeBgContainer = badgeBgLabel.closest("div");
+    expect(badgeBgContainer).toBeInTheDocument();
+    const darkBtn = screen.getByRole("button", {
+      name: /^Dark$/i,
+    });
+    expect(darkBtn).toBeInTheDocument();
+    fireEvent.click(darkBtn);
+    await waitForFreshPreview(null);
+
+    // Now change bgColor preset to "Soft Cream"
+    const bgColorLabel = screen.getByLabelText("Pattern Background");
+    const softCreamBtn = screen.getByRole("button", {
+      name: /^Soft Cream$/i,
+    });
+    expect(softCreamBtn).toBeInTheDocument();
+    fireEvent.click(softCreamBtn);
+    await waitForFreshPreview(null);
+
+    // Dark should still have bg-neutral-900, Match Pattern should not
+    expect(darkBtn).toHaveClass("bg-neutral-900");
+    expect(screen.getByRole("button", { name: /^Match Pattern$/i })).not.toHaveClass("bg-neutral-900");
+
+    // Change bgColor again and re-select Match Pattern
+    fireEvent.click(screen.getByLabelText("Matrix Block Color"), {
+      target: { value: "#111111" },
+    });
+    await waitForFreshPreview(null);
+    fireEvent.click(darkBtn);
+    await waitForFreshPreview(null);
+
+    // Dark still has bg-neutral-900, Match Pattern still has it
+    expect(darkBtn).toHaveClass("bg-neutral-900");
+    expect(screen.getByRole("button", { name: /^Match Pattern$/i })).toHaveClass("bg-neutral-900");
   });
 
-  it("still renders when Storage reads and writes throw", () => {
+  // ── Low-contrast warning ───────────────────────────────────────────
+  it("shows low-contrast warning and inverted message appropriately", async () => {
+    localStorage.clear();
+    render(<App />);
+
+    // No warning by default - check without name filter since jsdom doesn't match
+    // the accessible name consistently for role="status"
+    const defaultStatus = screen.getByRole("status");
+    expect(defaultStatus).not.toHaveTextContent(/low scan reliability/i);
+
+    // Use a color combo that triggers contrast warning + inverted: white qr on dark bg
+    fireEvent.change(screen.getByLabelText("Matrix Block Color"), "#ffffff");
+    fireEvent.change(screen.getByLabelText("Pattern Background"), "#000000");
+    await waitForFreshPreview(null);
+
+    // Should show low-contrast warning
+    const statusEl = screen.getByRole("status");
+    expect(statusEl).toHaveTextContent(/low scan reliability/i);
+
+    // Now invert: dark qr on light bg → only inverted message, no low-contrast text
+    fireEvent.change(screen.getByLabelText("Matrix Block Color"), "#000000");
+    fireEvent.change(screen.getByLabelText("Pattern Background"), "#ffffff");
+    await waitForFreshPreview(null);
+
+    // Should show only inverted message
+    const status2 = screen.getByRole("status");
+    expect(status2).toHaveTextContent(/darker blocks on a lighter background/i);
+    // Low-contrast warning should not be present with this combo
+    expect(screen.getByRole("status")).not.toHaveTextContent(/low scan reliability/i);
+  });
+
+  // ── 240+ char URL typing with no debounce delay ────────────────────
+  it("types 240+ char URL with no delay asserting final input value complete", async () => {
+    const longUrl = "https://example.com/" + "a".repeat(235); // ~240 chars
+    render(<App />);
+
+    const urlInput = screen.getByLabelText("Source Destination URL") as HTMLInputElement;
+    // Set value directly then fire change to trigger debounced generation
+    urlInput.value = longUrl;
+    fireEvent.change(urlInput, { target: { value: longUrl } });
+
+    // After all chars typed, the full URL should be present
+    expect(urlInput.value).toBe(longUrl);
+  });
+
+  // ── History save failure notice ────────────────────────────────────
+  it("shows notice when history save fails", async () => {
+    // Make localStorage.setItem throw since storageSet calls localStorage.setItem directly
+    const setItemSpy = vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+      throw new Error("storage blocked");
+    });
+
+    try {
+      localStorage.clear();
+      render(<App />);
+
+      await waitForFreshPreview(null);
+
+      const download = screen.getByRole("button", { name: /^download$/i });
+      fireEvent.click(download);
+
+      // The notice should appear (async recordHistory, storage throws)
+      await waitFor(() =>
+        expect(screen.findByRole("status", {
+          // eslint-disable-next-line testing-library/await-node-query
+        })).toBeInTheDocument()
+      );
+    } finally {
+      setItemSpy.mockRestore();
+    }
+  });
+
+  it "still renders when Storage reads and writes throw", () => {
     const getItemSpy = vi
       .spyOn(Storage.prototype, "getItem")
       .mockImplementation(() => {

@@ -12,19 +12,45 @@ export interface QrContentInput {
   wifi: WifiConfig;
 }
 
-// Standard URL regex validation
+/**
+ * True for a dotted-quad IPv4 hostname with every octet in range 0–255.
+ */
+function isIpv4Hostname(hostname: string): boolean {
+  const parts = hostname.split(".");
+  if (parts.length !== 4) return false;
+  return parts.every((part) => /^[0-9]{1,3}$/.test(part) && Number(part) <= 255);
+}
+
+/**
+ * URL validation built on the platform's `new URL()` parser instead of a hand
+ * rolled regex:
+ * - a protocol is required; `https://` is tried first when none was typed
+ * - only http/https protocols are accepted
+ * - the hostname must contain a dot, be `localhost`, or be an IPv4 address
+ */
 export const isValidUrl = (string: string) => {
-  if (!string) return false;
-  const pattern = new RegExp(
-    "^(https?:\\/\\/)?" + // protocol
-      "((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|" + // domain name
-      "((\\d{1,3}\\.){3}\\d{1,3}))" + // OR ip (v4) address
-      "(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*" + // port and path
-      "(\\?[;&a-z\\d%_.~+=-]*)?" + // query string
-      "(\\#[-a-z\\d_]*)?$", // fragment locator
-    "i"
-  );
-  return !!pattern.test(string);
+  const candidate = string.trim();
+  // Whitespace anywhere means the string was never a URL (the URL parser would
+  // happily keep a literal space in the path).
+  if (!candidate || /\s/.test(candidate)) return false;
+
+  // Only an explicit `http(s)://` prefix counts as a protocol; anything else
+  // (e.g. `localhost:3000`, which parses as an opaque scheme) gets a
+  // `https://` prepended instead.
+  const hasProtocol = /^https?:\/\//i.test(candidate);
+  const normalized = hasProtocol ? candidate : `https://${candidate}`;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(normalized);
+  } catch {
+    return false;
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
+
+  const hostname = parsed.hostname;
+  return hostname.includes(".") || hostname === "localhost" || isIpv4Hostname(hostname);
 };
 
 /**

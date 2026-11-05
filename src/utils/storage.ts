@@ -15,18 +15,22 @@ export function storageGet(key: string): string | null {
   }
 }
 
-export function storageSet(key: string, value: string): void {
+export function storageSet(key: string, value: string): boolean {
   try {
     localStorage.setItem(key, value);
+    return true;
   } catch {
-    // Storage unavailable or full — nothing the app can do about it.
+    // Storage unavailable or full — callers can show a notice.
+    return false;
   }
 }
 
-export function storageRemove(key: string): void {
+export function storageRemove(key: string): boolean {
   try {
     localStorage.removeItem(key);
+    return true;
   } catch {
     // Storage unavailable — the value simply stays (or never was) there.
+    return false;
   }
 }

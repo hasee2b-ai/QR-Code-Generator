@@ -55,7 +55,7 @@ export default function SiteHeader({
   };
 
   return (
-    <header className="relative h-20 border-b border-neutral-900/10 dark:border-neutral-800 flex items-center justify-between px-6 sm:px-12 bg-white dark:bg-neutral-950 sticky top-0 lg:static z-40 flex-shrink-0 transition-colors">
+    <header className="relative border-b border-neutral-900/10 dark:border-neutral-800 flex flex-col px-6 sm:px-12 bg-white dark:bg-neutral-950 sticky top-0 lg:static z-40 flex-shrink-0 transition-colors">
       {/* Subtle Loading Progress Bar across Header */}
       <AnimatePresence>
         {isGenerating && (
@@ -87,6 +87,7 @@ export default function SiteHeader({
         )}
       </AnimatePresence>
 
+      <div className="flex h-20 items-center justify-between">
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 bg-neutral-900 dark:bg-white rounded-none flex items-center justify-center transition-colors">
           <div className="w-4 h-4 border-2 border-white dark:border-neutral-900"></div>
@@ -97,9 +98,8 @@ export default function SiteHeader({
           </span>
         </div>
       </div>
-
       {/* Navigation Items (Thematic Styling) */}
-      <nav aria-label="Primary" className="hidden md:flex gap-8 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest">
+      <nav aria-label="Primary" className="hidden md:flex gap-8 text-xs font-semibold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest">
         {navLinks.map((link) => (
           <a
             key={link.href}
@@ -117,13 +117,16 @@ export default function SiteHeader({
           id="history-toggle-button"
           type="button"
           onClick={onOpenHistory}
-          title="Open Recent QR History"
-          aria-label="Open Recent QR History"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer select-none rounded-none border-2 border-neutral-900 dark:border-neutral-200 bg-white dark:bg-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.7)] text-neutral-900 dark:text-white hover:bg-neutral-50 dark:hover:bg-neutral-800 active:translate-x-[1px] active:translate-y-[1px]"
+          title={`Open Recent QR History (${historyCount})`}
+          aria-label={`Open Recent QR History (${historyCount})`}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer select-none rounded-none border-2 border-neutral-900 dark:border-neutral-200 bg-white dark:bg-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.7)] text-neutral-900 dark:text-white hover:bg-neutral-50 dark:hover:bg-neutral-800 active:translate-x-[1px] active:translate-y-[1px]"
         >
           <History className="w-3.5 h-3.5" />
           <span className="hidden xs:inline sm:inline">History</span>
-          <span className="px-1.5 py-0.2 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-[9px] font-mono leading-none">
+          <span
+            aria-hidden="true"
+            className="px-1.5 py-0.2 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-xs font-mono leading-none"
+          >
             {historyCount}
           </span>
         </button>
@@ -141,7 +144,7 @@ export default function SiteHeader({
             onClick={() => onThemeChange("light")}
             aria-pressed={theme === "light"}
             title="Switch to Light theme"
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer select-none rounded-none ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer select-none rounded-none ${
               theme === "light"
                 ? "bg-neutral-900 text-white shadow-[1px_1px_0px_0px_rgba(0,0,0,0.4)]"
                 : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
@@ -157,7 +160,7 @@ export default function SiteHeader({
             onClick={() => onThemeChange("dark")}
             aria-pressed={theme === "dark"}
             title="Switch to Dark theme"
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-mono font-bold uppercase tracking-wider transition-all cursor-pointer select-none rounded-none ${
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer select-none rounded-none ${
               theme === "dark"
                 ? "bg-white text-neutral-900 shadow-[1px_1px_0px_0px_rgba(255,255,255,0.4)]"
                 : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
@@ -169,6 +172,18 @@ export default function SiteHeader({
         </div>
 
       </div>
+      </div>
+
+      {/* Mobile anchor-link row (no horizontal nav on small screens) */}
+      <nav
+        aria-label="Page sections"
+        className="md:hidden -mx-6 sm:-mx-12 border-t border-neutral-900/10 dark:border-neutral-800 px-6 sm:px-12 py-2 flex flex-wrap gap-x-5 gap-y-1 text-xs font-semibold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest transition-colors"
+      >
+        <a href="#generator" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Generator</a>
+        <a href="#features" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Features</a>
+        <a href="#how-it-works" className="hover:text-neutral-900 dark:hover:text-white transition-colors">How it works</a>
+        <a href="#faq" className="hover:text-neutral-900 dark:hover:text-white transition-colors">FAQ</a>
+      </nav>
 
     </header>
   );

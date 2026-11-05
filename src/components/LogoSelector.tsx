@@ -37,6 +37,13 @@ export default function LogoSelector({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /**
+   * Colors chosen for the badge base are "custom" and survive later pattern
+   * background changes; matching the pattern is "pattern" (the default, also
+   * assumed for legacy logos saved before this field existed).
+   */
+  const badgeIsCustom = logo?.badgeBgMode === "custom";
+
   // Active preset lookup
   const currentPreset = PRESET_LOGOS.find((p) => p.id === logo?.presetId);
   const activeBadgeBg = logo?.bgColor || bgColor || "#ffffff";
@@ -67,6 +74,7 @@ export default function LogoSelector({
       shape: logo?.shape ?? "rounded",
       paddingRatio: 0.18,
       bgColor: badgeBg,
+      badgeBgMode: "pattern",
       iconColor: iconPref,
     });
   };
@@ -107,6 +115,7 @@ export default function LogoSelector({
           shape: logo?.shape ?? "rounded",
           paddingRatio: 0.15,
           bgColor: logo?.bgColor ?? bgColor,
+          badgeBgMode: logo?.badgeBgMode ?? "pattern",
         });
       }
     };
@@ -165,8 +174,8 @@ export default function LogoSelector({
     });
   };
 
-  // Change Badge Background
-  const handleBgChange = (newBg: string) => {
+  // Change Badge Background — records whether the user fixed the color
+  const handleBgChange = (newBg: string, mode: "pattern" | "custom") => {
     if (!logo) return;
     let newSrc = logo.src;
     if (logo.type === "preset" && logo.presetId) {
@@ -183,6 +192,7 @@ export default function LogoSelector({
     onChange({
       ...logo,
       bgColor: newBg,
+      badgeBgMode: mode,
       src: newSrc,
     });
   };
@@ -218,11 +228,11 @@ export default function LogoSelector({
       {/* Header bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <label className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+          <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest">
             Center Badge / Icon
           </label>
           {logo?.enabled && (
-            <span className="text-[9px] font-mono font-bold uppercase px-1.5 py-0.2 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900">
+            <span className="text-xs font-mono font-bold uppercase px-1.5 py-0.2 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900">
               Active
             </span>
           )}
@@ -232,7 +242,7 @@ export default function LogoSelector({
           <button
             type="button"
             onClick={handleClearLogo}
-            className="text-[10px] font-bold text-neutral-400 hover:text-neutral-900 dark:text-neutral-500 dark:hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1 cursor-pointer"
+            className="text-xs font-bold text-neutral-700 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors uppercase tracking-widest flex items-center gap-1 cursor-pointer"
           >
             <X className="w-3 h-3" />
             Remove Logo
@@ -245,10 +255,10 @@ export default function LogoSelector({
         <button
           type="button"
           onClick={() => setActiveTab("presets")}
-          className={`flex-1 py-1.5 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+          className={`flex-1 py-1.5 text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
             activeTab === "presets"
               ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]"
-              : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+              : "text-neutral-700 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -258,10 +268,10 @@ export default function LogoSelector({
         <button
           type="button"
           onClick={() => setActiveTab("upload")}
-          className={`flex-1 py-1.5 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+          className={`flex-1 py-1.5 text-xs font-mono font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
             activeTab === "upload"
               ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]"
-              : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+              : "text-neutral-700 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
           }`}
         >
           <UploadCloud className="w-3.5 h-3.5" />
@@ -304,7 +314,7 @@ export default function LogoSelector({
                     dangerouslySetInnerHTML={{ __html: preset.elements }}
                   />
                   <span
-                    className={`text-[8px] font-mono font-bold mt-1.5 tracking-tight truncate max-w-full ${
+                    className={`text-xs font-mono font-bold mt-1.5 tracking-tight truncate max-w-full ${
                       isSelected
                         ? "text-white dark:text-neutral-900"
                         : "text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-white"
@@ -313,7 +323,7 @@ export default function LogoSelector({
                     {preset.name}
                   </span>
                   {isSelected && (
-                    <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white border border-neutral-900 dark:border-white flex items-center justify-center text-[9px] shadow-sm">
+                    <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white border border-neutral-900 dark:border-white flex items-center justify-center text-xs shadow-sm">
                       <Check className="w-2.5 h-2.5 stroke-[3]" />
                     </span>
                   )}
@@ -344,13 +354,13 @@ export default function LogoSelector({
                   />
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold font-mono text-neutral-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="text-xs font-bold font-mono text-neutral-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
                     <span>{currentPreset.name}</span>
-                    <span className="text-[9px] font-normal px-1.5 py-0.2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-300 dark:border-neutral-700">
+                    <span className="text-xs font-normal px-1.5 py-0.2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-300 dark:border-neutral-700">
                       Active
                     </span>
                   </div>
-                  <div className="text-[9px] font-mono text-neutral-500 dark:text-neutral-400">
+                  <div className="text-xs font-mono text-neutral-700 dark:text-neutral-400">
                     Vector badge centered in matrix
                   </div>
                 </div>
@@ -359,7 +369,7 @@ export default function LogoSelector({
               <button
                 type="button"
                 onClick={handleClearLogo}
-                className="p-1.5 text-neutral-400 hover:text-neutral-900 dark:text-neutral-500 dark:hover:text-white transition-colors cursor-pointer"
+                className="p-1.5 text-neutral-700 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white transition-colors cursor-pointer"
                 title="Remove preset logo"
               >
                 <X className="w-4 h-4" />
@@ -398,10 +408,10 @@ export default function LogoSelector({
                 <UploadCloud className="w-5 h-5 text-neutral-900 dark:text-white" />
               </div>
               <div>
-                <p className="text-[11px] font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
+                <p className="text-xs font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
                   Drag & Drop Logo or Click to Browse
                 </p>
-                <p className="text-[9px] font-mono text-neutral-400 dark:text-neutral-500 mt-0.5">
+                <p className="text-xs font-mono text-neutral-700 dark:text-neutral-400 mt-0.5">
                   Supports PNG, JPG, SVG, WebP (Max 5 MB)
                 </p>
               </div>
@@ -409,7 +419,7 @@ export default function LogoSelector({
           </div>
 
           {uploadError && (
-            <div className="text-[10px] font-mono text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 p-2 border border-red-200 dark:border-red-800">
+            <div className="text-xs font-mono text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40 p-2 border border-red-200 dark:border-red-800">
               {uploadError}
             </div>
           )}
@@ -426,10 +436,10 @@ export default function LogoSelector({
                   />
                 </div>
                 <div>
-                  <div className="text-[11px] font-bold font-mono text-neutral-900 dark:text-white truncate max-w-[200px]">
+                  <div className="text-xs font-bold font-mono text-neutral-900 dark:text-white truncate max-w-[200px]">
                     {logo.name || "Custom Logo"}
                   </div>
-                  <div className="text-[9px] font-mono text-neutral-400 dark:text-neutral-500">
+                  <div className="text-xs font-mono text-neutral-700 dark:text-neutral-400">
                     Uploaded Image Active
                   </div>
                 </div>
@@ -438,7 +448,7 @@ export default function LogoSelector({
               <button
                 type="button"
                 onClick={handleClearLogo}
-                className="p-1 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
+                className="p-1 text-neutral-700 hover:text-neutral-900 dark:hover:text-white transition-colors"
                 title="Remove uploaded logo"
               >
                 <X className="w-4 h-4" />
@@ -455,7 +465,7 @@ export default function LogoSelector({
             
             {/* Shape Selector */}
             <div>
-              <label className="block text-[9px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+              <label className="block text-xs font-mono font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
                 <Shapes className="w-3 h-3" /> Badge Shape
               </label>
               <div className="grid grid-cols-3 gap-1.5">
@@ -472,7 +482,7 @@ export default function LogoSelector({
                       key={s.id}
                       type="button"
                       onClick={() => handleShapeChange(s.id)}
-                      className={`py-1.5 text-[9px] font-mono font-bold uppercase transition-all border cursor-pointer ${
+                      className={`py-1.5 text-xs font-mono font-bold uppercase transition-all border cursor-pointer ${
                         isSelected
                           ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
                           : "bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-neutral-900 dark:hover:border-neutral-300"
@@ -487,7 +497,7 @@ export default function LogoSelector({
 
             {/* Size Ratio Selector */}
             <div>
-              <label className="block text-[9px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+              <label className="block text-xs font-mono font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest mb-1.5 flex items-center gap-1">
                 <Maximize2 className="w-3 h-3" /> Badge Size
               </label>
               <div className="grid grid-cols-3 gap-1.5">
@@ -502,7 +512,7 @@ export default function LogoSelector({
                       key={s.label}
                       type="button"
                       onClick={() => handleSizeChange(s.ratio)}
-                      className={`py-1.5 text-[9px] font-mono font-bold uppercase transition-all border cursor-pointer ${
+                      className={`py-1.5 text-xs font-mono font-bold uppercase transition-all border cursor-pointer ${
                         isSelected
                           ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
                           : "bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700 hover:border-neutral-900 dark:hover:border-neutral-300"
@@ -520,17 +530,17 @@ export default function LogoSelector({
           {/* Preset Icon Color Palette (only for vector presets) */}
           {logo.type === "preset" && (
             <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-2">
-              <span className="text-[9px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest flex items-center gap-1">
+              <span className="text-xs font-mono font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest flex items-center gap-1">
                 <Palette className="w-3 h-3" /> Icon Tone
               </span>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
                   onClick={() => handleIconColorChange("auto")}
-                  className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase border cursor-pointer ${
+                  className={`px-2 py-0.5 text-xs font-mono font-bold uppercase border cursor-pointer ${
                     !logo.iconColor || logo.iconColor === "auto"
                       ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white"
-                      : "bg-white dark:bg-neutral-900 text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700"
+                      : "bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700"
                   }`}
                   title="Matches QR matrix color with guaranteed contrast"
                 >
@@ -539,10 +549,10 @@ export default function LogoSelector({
                 <button
                   type="button"
                   onClick={() => handleIconColorChange("#000000")}
-                  className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase border cursor-pointer ${
+                  className={`px-2 py-0.5 text-xs font-mono font-bold uppercase border cursor-pointer ${
                     logo.iconColor === "#000000"
                       ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white"
-                      : "bg-white dark:bg-neutral-900 text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700"
+                      : "bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700"
                   }`}
                 >
                   Dark
@@ -550,10 +560,10 @@ export default function LogoSelector({
                 <button
                   type="button"
                   onClick={() => handleIconColorChange("#ffffff")}
-                  className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase border cursor-pointer ${
+                  className={`px-2 py-0.5 text-xs font-mono font-bold uppercase border cursor-pointer ${
                     logo.iconColor === "#ffffff"
                       ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white"
-                      : "bg-white dark:bg-neutral-900 text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700"
+                      : "bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700"
                   }`}
                 >
                   Light
@@ -564,39 +574,39 @@ export default function LogoSelector({
 
           {/* Badge Background Color Option */}
           <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-[9px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
+            <span className="text-xs font-mono font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest">
               Badge Base Background
             </span>
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
-                onClick={() => handleBgChange(bgColor)}
-                className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase border cursor-pointer ${
-                  logo.bgColor === bgColor || !logo.bgColor
+                onClick={() => handleBgChange(bgColor, "pattern")}
+                className={`px-2 py-0.5 text-xs font-mono font-bold uppercase border cursor-pointer ${
+                  !badgeIsCustom
                     ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white"
-                    : "bg-white dark:bg-neutral-900 text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700"
+                    : "bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700"
                 }`}
               >
                 Match Pattern
               </button>
               <button
                 type="button"
-                onClick={() => handleBgChange("#ffffff")}
-                className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase border cursor-pointer ${
-                  logo.bgColor === "#ffffff" && bgColor !== "#ffffff"
+                onClick={() => handleBgChange("#ffffff", "custom")}
+                className={`px-2 py-0.5 text-xs font-mono font-bold uppercase border cursor-pointer ${
+                  badgeIsCustom && logo.bgColor === "#ffffff"
                     ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white"
-                    : "bg-white dark:bg-neutral-900 text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700"
+                    : "bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700"
                 }`}
               >
                 White
               </button>
               <button
                 type="button"
-                onClick={() => handleBgChange("#000000")}
-                className={`px-2 py-0.5 text-[9px] font-mono font-bold uppercase border cursor-pointer ${
-                  logo.bgColor === "#000000" && bgColor !== "#000000"
+                onClick={() => handleBgChange("#000000", "custom")}
+                className={`px-2 py-0.5 text-xs font-mono font-bold uppercase border cursor-pointer ${
+                  badgeIsCustom && logo.bgColor === "#000000"
                     ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 border-neutral-900 dark:border-white"
-                    : "bg-white dark:bg-neutral-900 text-neutral-500 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700"
+                    : "bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700"
                 }`}
               >
                 Dark
@@ -605,7 +615,7 @@ export default function LogoSelector({
           </div>
 
           {/* Scannability Safety notice */}
-          <div className="flex items-center gap-1.5 text-[9px] font-mono text-emerald-700 dark:text-emerald-400 pt-1">
+          <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-700 dark:text-emerald-400 pt-1">
             <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
             <span>Reed-Solomon Level H (30% redundancy) automatically calibrated for instant camera recognition.</span>
           </div>

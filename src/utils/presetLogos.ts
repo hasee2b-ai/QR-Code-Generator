@@ -118,6 +118,18 @@ export function getLuminance(hex: string): number {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
+/**
+ * Contrast ratio (approx.), built on the existing luminance helper: how much
+ * brighter the lighter color is than the darker one. White vs black → 21.
+ */
+export function getContrastRatio(a: string, b: string): number {
+  const la = getLuminance(a);
+  const lb = getLuminance(b);
+  const lighter = Math.max(la, lb);
+  const darker = Math.min(la, lb);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 export function getHighContrastColor(bgHex: string, desiredHex?: string): string {
   const bgLum = getLuminance(bgHex);
   if (desiredHex && desiredHex !== "auto") {

@@ -13,7 +13,7 @@ export default function SeoSections() {
 
         {/* Feature grid */}
         <section id="features" aria-labelledby="features-heading" className="scroll-mt-24">
-          <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 block">
+          <span className="text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest mb-2 block">
             Built for scan reliability
           </span>
           <h2
@@ -22,7 +22,7 @@ export default function SeoSections() {
           >
             Everything a QR code maker should be
           </h2>
-          <p className="text-neutral-500 dark:text-neutral-400 max-w-2xl leading-relaxed mb-10 text-sm sm:text-base">
+          <p className="text-neutral-700 dark:text-neutral-400 max-w-2xl leading-relaxed mb-10 text-sm sm:text-base">
             FREESUBQR is a free online QR code generator for websites, landing pages, social profiles
             and print campaigns. Paste a link, style your code, and export a crisp, scannable PNG —
             no account, no watermark, no upload.
@@ -34,13 +34,13 @@ export default function SeoSections() {
                 key={feature.id}
                 className="border-2 border-neutral-900 dark:border-neutral-100 bg-white dark:bg-neutral-900 p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.7)]"
               >
-                <span className="block text-[10px] font-mono font-bold text-neutral-400 dark:text-neutral-500 tracking-widest mb-3">
+                <span className="block text-xs font-mono font-bold text-neutral-700 dark:text-neutral-400 tracking-widest mb-3">
                   {feature.id} //
                 </span>
                 <h3 className="text-sm font-black uppercase tracking-wide text-neutral-900 dark:text-white mb-2 font-display">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                <p className="text-sm text-neutral-700 dark:text-neutral-400 leading-relaxed">
                   {feature.body}
                 </p>
               </li>
@@ -50,7 +50,7 @@ export default function SeoSections() {
 
         {/* How-to steps */}
         <section id="how-it-works" aria-labelledby="how-it-works-heading" className="scroll-mt-24">
-          <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 block">
+          <span className="text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest mb-2 block">
             Three steps, ten seconds
           </span>
           <h2
@@ -69,7 +69,7 @@ export default function SeoSections() {
                 <h3 className="text-sm font-black uppercase tracking-wide text-neutral-900 dark:text-white mb-2 font-display">
                   {item.title}
                 </h3>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                <p className="text-sm text-neutral-700 dark:text-neutral-400 leading-relaxed">
                   {item.body}
                 </p>
               </li>
@@ -79,7 +79,7 @@ export default function SeoSections() {
 
         {/* FAQ — kept in sync with the FAQPage JSON-LD via src/data/content.ts */}
         <section id="faq" aria-labelledby="faq-heading" className="scroll-mt-24">
-          <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 block">
+          <span className="text-xs font-bold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest mb-2 block">
             Quick answers
           </span>
           <h2
@@ -95,7 +95,7 @@ export default function SeoSections() {
                 <h3 className="text-sm sm:text-base font-bold text-neutral-900 dark:text-white mb-1.5">
                   {item.q}
                 </h3>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                <p className="text-sm text-neutral-700 dark:text-neutral-400 leading-relaxed">
                   {item.a}
                 </p>
               </div>

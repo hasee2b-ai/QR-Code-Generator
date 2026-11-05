@@ -3,17 +3,43 @@ import { buildQrContent, buildWifiPayload, escapeWifiValue, isValidUrl } from ".
 import { DEFAULT_WIFI, WIFI_OPEN, WIFI_PRIVATE, WIFI_WITH_ESCAPES } from "../test/fixtures";
 
 describe("isValidUrl", () => {
-  it("accepts full URLs and bare domains", () => {
+  it("accepts full URLs", () => {
+    expect(isValidUrl("https://example.com")).toBe(true);
     expect(isValidUrl("https://google.com")).toBe(true);
     expect(isValidUrl("http://google.com/search?q=qr#top")).toBe(true);
-    expect(isValidUrl("google.com")).toBe(true);
+  });
+
+  it("accepts hostnames with a real dot (https:// is prepended)", () => {
+    expect(isValidUrl("https://example.com/?next=https://x.com")).toBe(true);
+    expect(isValidUrl("https://example.com/#/settings")).toBe(true);
+    expect(isValidUrl("https://example.com/@user")).toBe(true);
+    expect(isValidUrl("maps.google.com/?q=31.5,74.3")).toBe(true);
+    expect(isValidUrl("example.com/path(1)")).toBe(true);
+    expect(isValidUrl("bücher.de")).toBe(true);
+  });
+
+  it("accepts localhost ports and bare IPv4 addresses", () => {
+    expect(isValidUrl("localhost:3000")).toBe(true);
     expect(isValidUrl("192.168.0.1")).toBe(true);
   });
 
   it("rejects empty strings and free text", () => {
     expect(isValidUrl("")).toBe(false);
-    expect(isValidUrl("not a url")).toBe(false);
+    expect(isValidUrl("   ")).toBe(false);
     expect(isValidUrl("hello")).toBe(false);
+    expect(isValidUrl("not a url")).toBe(false);
+    expect(isValidUrl("example.com/a b")).toBe(false);
+  });
+
+  it("rejects hostless references without a hostname", () => {
+    expect(isValidUrl("?next=https://x.com")).toBe(false);
+    expect(isValidUrl("#/settings")).toBe(false);
+    expect(isValidUrl("/@user")).toBe(false);
+  });
+
+  it("rejects non-http(s) protocols", () => {
+    expect(isValidUrl("ftp://example.com")).toBe(false);
+    expect(isValidUrl("javascript:alert(1)")).toBe(false);
   });
 });
 

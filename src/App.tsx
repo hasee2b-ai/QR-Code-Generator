@@ -19,6 +19,14 @@ import { PRESET_LOGOS, createPresetSvgDataUri, resolvePresetIconColor } from "./
 import { DEFAULT_URL } from "./data/presets";
 import { storageGet, storageRemove, storageSet } from "./utils/storage";
 
+/**
+ * The storage keys are intentionally NOT renamed with the package: they carry
+ * the old `hk_qr_` prefix on purpose, so existing users keep their saved
+ * history and theme instead of being orphaned by the rename to `freesubqr`.
+ */
+const HISTORY_STORAGE_KEY = "hk_qr_history";
+const THEME_STORAGE_KEY = "hk_qr_theme";
+
 const DEFAULT_WIFI: WifiConfig = {
   ssid: "",
   password: "",
@@ -53,9 +61,44 @@ function isSameHistoryPayload(a: QrHistoryItem, b: QrHistoryItem): boolean {
   return left.toLowerCase() === right.toLowerCase();
 }
 
+/**
+ * History-size guard: uploaded logos are re-encoded from a canvas so a saved
+ * entry never carries a multi-megabyte data URL (max 256px per side). On any
+ * failure — loader errors, tainted canvas, missing 2d context — the original
+ * data URL is kept so history saving still works.
+ */
+async function downscaleLogoForHistory(src: string): Promise<string> {
+  try {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext?.("2d");
+    if (!ctx) return src;
+
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("logo image failed to load"));
+      image.src = src;
+    });
+
+    const longest = Math.max(image.naturalWidth || 1, image.naturalHeight || 1);
+    if (longest <= 256) return src;
+
+    const scale = 256 / longest;
+    canvas.width = Math.round((image.naturalWidth || 256) * scale);
+    canvas.height = Math.round((image.naturalHeight || 256) * scale);
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const downscaled = canvas.toDataURL("image/png");
+    return downscaled || src;
+  } catch {
+    return src;
+  }
+}
+
 /** Reads stored history, purging any Wi-Fi entries older versions saved. */
 function loadHistory(): QrHistoryItem[] {
-  const saved = storageGet("hk_qr_history");
+  const saved = storageGet(HISTORY_STORAGE_KEY);
   if (!saved) return [];
 
   try {
@@ -66,7 +109,7 @@ function loadHistory(): QrHistoryItem[] {
     // versions may have written, then persist the cleaned list.
     const cleaned = parsed.filter(isStorableHistoryItem);
     if (cleaned.length !== parsed.length) {
-      storageSet("hk_qr_history", JSON.stringify(cleaned));
+      storageSet(HISTORY_STORAGE_KEY, JSON.stringify(cleaned));
     }
 
     return cleaned.slice(0, 5);
@@ -85,7 +128,7 @@ const EMPTY_STATES: Record<ContentType, { title: string; hint: string }> = {
 export default function App() {
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
-      const saved = storageGet("hk_qr_theme");
+      const saved = storageGet(THEME_STORAGE_KEY);
       if (saved === "light" || saved === "dark") return saved;
       if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
         return "dark";
@@ -111,6 +154,7 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [history, setHistory] = useState<QrHistoryItem[]>(() => loadHistory());
+  const [historyNotice, setHistoryNotice] = useState<string | null>(null);
 
   /** The exact string encoded into the QR matrix for the active content type. */
   const content = useMemo(
@@ -150,14 +194,38 @@ export default function App() {
         }
       }
     }
-  }, [qrColor, bgColor, logo?.presetId, logo?.bgColor, logo?.iconColor]);
+  }, [qrColor, bgColor, logo?.presetId, logo?.bgColor, logo?.iconColor, logo?.src]);
 
-  // Sync badge base background with pattern background
+  /**
+   * Badge base background follows the pattern background — but only while the
+   * badge is in "match pattern" mode (its default). A badge color the user
+   * explicitly picked stays fixed when the pattern background changes.
+   */
   useEffect(() => {
-    if (logo?.enabled && logo.bgColor && logo.bgColor !== "#ffffff") {
-      setLogo((prev) => (prev ? { ...prev, bgColor } : null));
-    }
+    setLogo((prev) => {
+      if (
+        prev?.enabled &&
+        prev.badgeBgMode !== "custom" &&
+        prev.bgColor !== bgColor
+      ) {
+        return { ...prev, bgColor };
+      }
+      // Nothing changed — skip the update entirely.
+      return prev;
+    });
   }, [bgColor]);
+
+  /**
+   * Legacy history logos saved before `badgeBgMode` existed had no flag;
+   * infer it from the stored snapshot: a badge color equal to the item's
+   * pattern background was followed by the old sync effect, anything else
+   * was a fixed color that must be preserved.
+   */
+  const withInferredBadgeMode = (logo: LogoConfig, patternBg: string): LogoConfig => {
+    if (logo.badgeBgMode) return logo;
+    const mode = logo.bgColor && patternBg ? (logo.bgColor === patternBg ? "pattern" : "custom") : "pattern";
+    return { ...logo, badgeBgMode: mode };
+  };
 
   const handleRestoreHistory = (item: QrHistoryItem) => {
     const restoredType: ContentType = item.contentType ?? "url";
@@ -176,7 +244,7 @@ export default function App() {
     if (item.size) setSize(item.size);
     if (item.errorCorrection) setErrorCorrection(item.errorCorrection);
     if (item.logo) {
-      setLogo(item.logo);
+      setLogo(withInferredBadgeMode(item.logo, item.bgColor));
     } else {
       setLogo(null);
     }
@@ -184,16 +252,19 @@ export default function App() {
   };
 
   const handleRemoveHistoryItem = (id: string) => {
-    setHistory((prev) => {
-      const updated = prev.filter((item) => item.id !== id);
-      storageSet("hk_qr_history", JSON.stringify(updated));
-      return updated;
-    });
+    const updated = history.filter((item) => item.id !== id);
+    setHistory(updated);
+    if (!storageSet(HISTORY_STORAGE_KEY, JSON.stringify(updated))) {
+      setHistoryNotice(
+        "Couldn't save the history change — browser storage is unavailable or full."
+      );
+      window.setTimeout(() => setHistoryNotice(null), 8000);
+    }
   };
 
   const handleClearHistory = () => {
     setHistory([]);
-    storageRemove("hk_qr_history");
+    storageRemove(HISTORY_STORAGE_KEY);
   };
 
   useEffect(() => {
@@ -203,7 +274,7 @@ export default function App() {
     } else {
       root.classList.remove("dark");
     }
-    storageSet("hk_qr_theme", theme);
+    storageSet(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
   // Generate QR code with options and center logo
@@ -252,7 +323,7 @@ export default function App() {
 
     const timer = setTimeout(() => {
       generate();
-    }, 70);
+    }, 120);
 
     return () => {
       active = false;
@@ -285,10 +356,17 @@ export default function App() {
    * export (Download PNG, Download SVG, Copy, Share), so intermediate typing
    * states never end up in the list. `isStorableHistoryItem` guards the save
    * path too: Wi-Fi payloads embed the network password and are never stored.
+   * Uploaded logos are downscaled to ≤256px so a stored entry stays small.
    */
-  const recordHistory = () => {
+  const recordHistory = async () => {
     const payload = content.trim();
     if (payload.length < 3) return;
+
+    let savedLogo: LogoConfig | null =
+      logo && logo.enabled && logo.src ? { ...logo } : null;
+    if (savedLogo?.type === "upload") {
+      savedLogo = { ...savedLogo, src: await downscaleLogoForHistory(savedLogo.src) };
+    }
 
     const newItem: QrHistoryItem = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -298,20 +376,24 @@ export default function App() {
       bgColor,
       size,
       errorCorrection: logo?.enabled && logo.src ? "H" : errorCorrection,
-      logo: logo && logo.enabled && logo.src ? { ...logo } : null,
+      logo: savedLogo,
       contentType,
     };
 
     if (!isStorableHistoryItem(newItem)) return;
 
-    setHistory((prev) => {
-      const updated = [
-        newItem,
-        ...prev.filter((item) => !isSameHistoryPayload(item, newItem)),
-      ].slice(0, 5);
-      storageSet("hk_qr_history", JSON.stringify(updated));
-      return updated;
-    });
+    const updated = [
+      newItem,
+      ...history.filter((item) => !isSameHistoryPayload(item, newItem)),
+    ].slice(0, 5);
+    setHistory(updated);
+
+    if (!storageSet(HISTORY_STORAGE_KEY, JSON.stringify(updated))) {
+      setHistoryNotice(
+        "Couldn't save this code to history — browser storage is unavailable or full."
+      );
+      window.setTimeout(() => setHistoryNotice(null), 8000);
+    }
   };
 
   // Download QR code as PNG file
@@ -553,6 +635,16 @@ export default function App() {
         />
 
       </div>
+
+      {/* History storage warning: visible, politely announced status notice */}
+      {historyNotice && (
+        <div
+          role="status"
+          className="text-xs font-mono text-neutral-900 dark:text-neutral-100 bg-amber-100 dark:bg-amber-900/40 border-t border-amber-700/40 dark:border-amber-400/40 px-6 py-2.5"
+        >
+          {historyNotice}
+        </div>
+      )}
 
       {/* Geometric Balance - Footer Status bar */}
       <StatusBar />

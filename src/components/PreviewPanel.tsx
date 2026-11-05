@@ -65,11 +65,11 @@ export default function PreviewPanel({
 
   const primaryButtonClass = canExport
     ? "bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 active:translate-x-[2px] active:translate-y-[2px] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] border-2 border-neutral-900 dark:border-white cursor-pointer"
-    : "bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 border border-neutral-300 dark:border-neutral-700 cursor-not-allowed";
+    : "bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-800 border border-neutral-300 dark:border-neutral-700 cursor-not-allowed";
 
   const secondaryButtonClass = canExport
     ? "bg-white dark:bg-neutral-900 border-2 border-neutral-900 dark:border-neutral-100 text-neutral-900 dark:text-white hover:bg-neutral-50 dark:hover:bg-neutral-800 active:translate-x-[2px] active:translate-y-[2px] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.7)] cursor-pointer"
-    : "bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-300 dark:text-neutral-700 cursor-not-allowed";
+    : "bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-300 dark:text-neutral-400 cursor-not-allowed";
 
   return (
     <section
@@ -116,15 +116,15 @@ export default function PreviewPanel({
                   </motion.div>
                 ) : (
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <RefreshCw className="w-6 h-6 text-neutral-400 dark:text-neutral-500 animate-spin" />
-                    <span className="text-[10px] font-mono text-neutral-500 dark:text-neutral-400">Compiling matrix...</span>
+                    <RefreshCw className="w-6 h-6 text-neutral-700 dark:text-neutral-400 animate-spin" />
+                    <span className="text-xs font-mono text-neutral-700 dark:text-neutral-400">Compiling matrix...</span>
                   </div>
                 )
               ) : (
                 <div className="text-center p-4">
                   <div className="w-10 h-10 border-2 border-neutral-900 dark:border-neutral-100 mx-auto flex items-center justify-center text-neutral-900 dark:text-white mb-2 font-black">?</div>
-                  <p className="text-[11px] font-bold text-neutral-900 dark:text-white uppercase tracking-wider">{emptyTitle}</p>
-                  <p className="text-[9px] text-neutral-400 dark:text-neutral-500 font-mono mt-1 uppercase max-w-[150px] mx-auto">
+                  <p className="text-xs font-bold text-neutral-900 dark:text-white uppercase tracking-wider">{emptyTitle}</p>
+                  <p className="text-xs text-neutral-700 dark:text-neutral-400 font-mono mt-1 uppercase max-w-[150px] mx-auto">
                     {emptyHint}
                   </p>
                 </div>
@@ -147,7 +147,7 @@ export default function PreviewPanel({
 
         {/* Interactive metadata details */}
         <div className="mt-6 xl:mt-8 flex flex-col items-center w-full">
-          <div className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-3 xl:mb-4 text-center">
+          <div className="text-xs font-mono text-neutral-700 dark:text-neutral-400 uppercase tracking-widest mb-3 xl:mb-4 text-center">
             PREVIEW PATTERN // {size} x {size} PX // ERR_CORR: {logo?.enabled && logo.src ? "H (CALIBRATED)" : errorCorrection}
             {logo?.enabled && logo.src ? ` // BADGE: ${logo.type === "preset" ? (logo.name || "ICON") : "CUSTOM"}` : ""}
           </div>
@@ -187,7 +187,7 @@ export default function PreviewPanel({
                 {copied ? (
                   <>
                     <span>Copied!</span>
-                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <Check className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                   </>
                 ) : (
                   <>
@@ -207,12 +207,12 @@ export default function PreviewPanel({
                 {shareStatus === "shared" ? (
                   <>
                     <span>Shared!</span>
-                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <Check className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                   </>
                 ) : shareStatus === "copied" ? (
                   <>
                     <span>Link Copied</span>
-                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <Check className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                   </>
                 ) : (
                   <>
@@ -231,7 +231,7 @@ export default function PreviewPanel({
                 initial={{ opacity: 0, y: 4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="mt-3 text-center text-[10px] font-mono text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)]"
+                className="mt-3 text-center text-xs font-mono text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 px-3 py-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)]"
               >
                 {shareFeedback}
               </motion.div>
