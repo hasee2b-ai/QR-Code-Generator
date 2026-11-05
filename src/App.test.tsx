@@ -168,7 +168,7 @@ describe("App", () => {
     await waitFor(() => expect(getPreviewSrc()).toMatch(/^data:image\/png/), { timeout: 4000 });
 
     // Export attempts must not persist the Wi-Fi payload either.
-    fireEvent.click(screen.getByRole("button", { name: /^download$/i }));
+    fireEvent.click(screen.getAllByRole("button", { name: /^download$/i })[0]);
 
     const stored = localStorage.getItem("hk_qr_history") ?? "";
     expect(stored).toBe(JSON.stringify([urlHistoryEntry]));

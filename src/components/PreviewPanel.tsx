@@ -248,6 +248,7 @@ export default function PreviewPanel({
             <img src={qrDataUrl} alt={`QR code for ${previewLabel}`} className="w-full h-full object-contain p-0.5" />
           </div>
           <button
+            id="download-qr-btn-mobile"
             onClick={onDownload}
             disabled={!canExport}
             className={`flex-1 px-4 py-2.5 font-bold uppercase tracking-wider text-xs font-mono flex items-center justify-center gap-1.5 rounded-none transition-all ${primaryButtonClass}`}

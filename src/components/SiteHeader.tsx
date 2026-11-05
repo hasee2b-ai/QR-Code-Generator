@@ -22,6 +22,7 @@ export default function SiteHeader({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (typeof IntersectionObserver === "undefined") return;
     const sections = ["generator", "features", "how-it-works", "faq"];
     const observer = new IntersectionObserver(
       (entries) => {
@@ -115,6 +116,7 @@ export default function SiteHeader({
           <a
             key={link.href}
             href={link.href}
+            onClick={() => setMobileMenuOpen(false)}
             className={isActive(link.href) ? "text-neutral-900 dark:text-white border-b-2 border-neutral-900 dark:border-white pb-1" : "hover:text-neutral-900 dark:hover:text-white pb-1"}
           >
             {link.label}
@@ -123,21 +125,6 @@ export default function SiteHeader({
       </nav>
 
       <div className="flex items-center gap-3 sm:gap-4">
-        <div className="hidden sm:block text-[11px] font-mono text-neutral-600 dark:text-neutral-400 font-semibold tracking-wider">
-          v{__APP_VERSION__} // STABLE
-        </div>
-
-        {/* Mobile menu button */}
-        <button
-          type="button"
-          onClick={() => setMobileMenuOpen((open) => !open)}
-          aria-expanded={mobileMenuOpen}
-          aria-label="Toggle navigation menu"
-          className="md:hidden flex items-center justify-center w-9 h-9 border-2 border-neutral-900 dark:border-neutral-200 bg-white dark:bg-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.7)] text-neutral-900 dark:text-white"
-        >
-          {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-        </button>
-
         {/* History Drawer Toggle Button */}
         <button
           id="history-toggle-button"
@@ -193,6 +180,17 @@ export default function SiteHeader({
             <span className="hidden xs:inline sm:inline">Dark</span>
           </button>
         </div>
+
+        {/* Mobile menu button */}
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          aria-expanded={mobileMenuOpen}
+          aria-label="Toggle navigation menu"
+          className="md:hidden flex items-center justify-center w-9 h-9 border-2 border-neutral-900 dark:border-neutral-200 bg-white dark:bg-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.7)] text-neutral-900 dark:text-white"
+        >
+          {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        </button>
       </div>
 
       {mobileMenuOpen && (
@@ -201,7 +199,9 @@ export default function SiteHeader({
             <a
               key={link.href}
               href={link.href}
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={(e) => {
+                setMobileMenuOpen(false);
+              }}
               className={isActive(link.href) ? "text-neutral-900 dark:text-white font-semibold uppercase tracking-widest text-xs" : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white font-semibold uppercase tracking-widest text-xs"}
             >
               {link.label}
