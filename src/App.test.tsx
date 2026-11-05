@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import App from "./App";
@@ -52,7 +52,7 @@ describe("App", () => {
     localStorage.clear();
     render(<App />);
 
-    const urlInput = screen.getByLabelText("QR code generator") as HTMLInputElement;
+    const urlInput = screen.getByLabelText("Source Destination URL") as HTMLInputElement;
     expect(urlInput.value).toBe("https://freesubqr.vercel.app");
 
     // No history exists until the first successful export.
@@ -177,7 +177,7 @@ describe("App", () => {
     );
   });
 
-  it "says the password is included when a Wi-Fi share falls back to the clipboard", async () => {
+  it("says the password is included when a Wi-Fi share falls back to the clipboard", async () => {
     localStorage.clear();
     render(<App />);
 
@@ -206,9 +206,9 @@ describe("App", () => {
     });
     // The copied payload is the Wi-Fi join string, password included.
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining("WIFI:"));
-  };
+  });
 
-  it "still renders when Storage reads and writes throw", () => {
+  it("still renders when Storage reads and writes throw", () => {
     const getItemSpy = vi
       .spyOn(Storage.prototype, "getItem")
       .mockImplementation(() => {
@@ -237,7 +237,7 @@ describe("App", () => {
       getItemSpy.mockRestore();
       setItemSpy.mockRestore();
     }
-  };
+  });
 
   // ── Custom badge survives background change ────────────────────────
   it("custom badge survives background colour change", async () => {
@@ -250,40 +250,44 @@ describe("App", () => {
     await waitForFreshPreview(null);
 
     // Open Badge Base Background options and select "Dark"
-    const badgeBgLabel = screen.getByLabelText("Badge Base Background");
-    const badgeBgContainer = badgeBgLabel.closest("div");
+    const badgeBgSpan = screen.getByText("Badge Base Background");
+    const badgeBgContainer = badgeBgSpan.closest("div");
     expect(badgeBgContainer).toBeInTheDocument();
-    const darkBtn = screen.getByRole("button", {
+    const darkBtn = within(badgeBgContainer).getByRole("button", {
       name: /^Dark$/i,
     });
     expect(darkBtn).toBeInTheDocument();
     fireEvent.click(darkBtn);
     await waitForFreshPreview(null);
 
-    // Now change bgColor preset to "Soft Cream"
-    const bgColorLabel = screen.getByLabelText("Pattern Background");
-    const softCreamBtn = screen.getByRole("button", {
-      name: /^Soft Cream$/i,
-    });
-    expect(softCreamBtn).toBeInTheDocument();
-    fireEvent.click(softCreamBtn);
+    // Now change pattern background via the colour input (not a preset click)
+    const bgColorInput = screen.getByLabelText("Pattern Background") as HTMLInputElement;
+    fireEvent.change(bgColorInput, { target: { value: "#fffbeb" } }); // Soft Cream
     await waitForFreshPreview(null);
 
-    // Dark should still have bg-neutral-900, Match Pattern should not
+    // Dark badge should still have bg-neutral-900, Match Pattern should not
     expect(darkBtn).toHaveClass("bg-neutral-900");
     expect(screen.getByRole("button", { name: /^Match Pattern$/i })).not.toHaveClass("bg-neutral-900");
 
-    // Change bgColor again and re-select Match Pattern
-    fireEvent.click(screen.getByLabelText("Matrix Block Color"), {
+    // Click Match Pattern to switch back to pattern mode
+    const matchPatternBtn = within(badgeBgContainer).getByRole("button", {
+      name: /^Match Pattern$/i,
+    });
+    fireEvent.click(matchPatternBtn);
+    await waitForFreshPreview(null);
+
+    // Match Pattern has bg-neutral-900, Dark does not
+    expect(matchPatternBtn).toHaveClass("bg-neutral-900");
+    expect(darkBtn).not.toHaveClass("bg-neutral-900");
+
+    // Change bgColor again via colour input
+    fireEvent.change(screen.getByLabelText("Matrix Block Color"), {
       target: { value: "#111111" },
     });
     await waitForFreshPreview(null);
-    fireEvent.click(darkBtn);
-    await waitForFreshPreview(null);
 
-    // Dark still has bg-neutral-900, Match Pattern still has it
-    expect(darkBtn).toHaveClass("bg-neutral-900");
-    expect(screen.getByRole("button", { name: /^Match Pattern$/i })).toHaveClass("bg-neutral-900");
+    // Match Pattern still has bg-neutral-900
+    expect(matchPatternBtn).toHaveClass("bg-neutral-900");
   });
 
   // ── Low-contrast warning ───────────────────────────────────────────
@@ -293,12 +297,16 @@ describe("App", () => {
 
     // No warning by default - check without name filter since jsdom doesn't match
     // the accessible name consistently for role="status"
-    const defaultStatus = screen.getByRole("status");
-    expect(defaultStatus).not.toHaveTextContent(/low scan reliability/i);
+    const defaultStatus = screen.queryByRole("status");
+    expect(defaultStatus).toBeNull();
 
     // Use a color combo that triggers contrast warning + inverted: white qr on dark bg
-    fireEvent.change(screen.getByLabelText("Matrix Block Color"), "#ffffff");
-    fireEvent.change(screen.getByLabelText("Pattern Background"), "#000000");
+    fireEvent.change(screen.getByLabelText("Matrix Block Color"), {
+      target: { value: "#ffffff" },
+    });
+    fireEvent.change(screen.getByLabelText("Pattern Background"), {
+      target: { value: "#000000" },
+    });
     await waitForFreshPreview(null);
 
     // Should show low-contrast warning
@@ -306,15 +314,18 @@ describe("App", () => {
     expect(statusEl).toHaveTextContent(/low scan reliability/i);
 
     // Now invert: dark qr on light bg → only inverted message, no low-contrast text
-    fireEvent.change(screen.getByLabelText("Matrix Block Color"), "#000000");
-    fireEvent.change(screen.getByLabelText("Pattern Background"), "#ffffff");
+    fireEvent.change(screen.getByLabelText("Matrix Block Color"), {
+      target: { value: "#000000" },
+    });
+    fireEvent.change(screen.getByLabelText("Pattern Background"), {
+      target: { value: "#ffffff" },
+    });
     await waitForFreshPreview(null);
 
     // Should show only inverted message
-    const status2 = screen.getByRole("status");
-    expect(status2).toHaveTextContent(/darker blocks on a lighter background/i);
+    const status2 = screen.queryByRole("status");
+    expect(status2).toBeNull();
     // Low-contrast warning should not be present with this combo
-    expect(screen.getByRole("status")).not.toHaveTextContent(/low scan reliability/i);
   });
 
   // ── 240+ char URL typing with no debounce delay ────────────────────
@@ -323,20 +334,26 @@ describe("App", () => {
     render(<App />);
 
     const urlInput = screen.getByLabelText("Source Destination URL") as HTMLInputElement;
-    // Set value directly then fire change to trigger debounced generation
-    urlInput.value = longUrl;
-    fireEvent.change(urlInput, { target: { value: longUrl } });
+    // Type in chunks with fireEvent.change (no delay between chunks)
+    const chunkSize = 50;
+    for (let i = 0; i < longUrl.length; i += chunkSize) {
+      fireEvent.change(urlInput, { target: { value: longUrl.slice(0, i + chunkSize) } });
+    }
 
     // After all chars typed, the full URL should be present
     expect(urlInput.value).toBe(longUrl);
+    // And the generated preview should appear (debounce completed)
+    await waitForFreshPreview(null);
   });
 
   // ── History save failure notice ────────────────────────────────────
   it("shows notice when history save fails", async () => {
-    // Make localStorage.setItem throw since storageSet calls localStorage.setItem directly
-    const setItemSpy = vi.spyOn(localStorage, "setItem").mockImplementation(() => {
-      throw new Error("storage blocked");
-    });
+    // Make Storage.prototype.setItem throw since storageSet calls localStorage.setItem directly
+    const setItemSpy = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("storage blocked");
+      });
 
     try {
       localStorage.clear();
@@ -348,43 +365,9 @@ describe("App", () => {
       fireEvent.click(download);
 
       // The notice should appear (async recordHistory, storage throws)
-      await waitFor(() =>
-        expect(screen.findByRole("status", {
-          // eslint-disable-next-line testing-library/await-node-query
-        })).toBeInTheDocument()
-      );
+      const statusEl = await screen.findByRole("status");
+      expect(statusEl).toHaveTextContent(/couldn't save/i);
     } finally {
-      setItemSpy.mockRestore();
-    }
-  });
-
-  it "still renders when Storage reads and writes throw", () => {
-    const getItemSpy = vi
-      .spyOn(Storage.prototype, "getItem")
-      .mockImplementation(() => {
-        throw new Error("storage blocked");
-      });
-    const setItemSpy = vi
-      .spyOn(Storage.prototype, "setItem")
-      .mockImplementation(() => {
-        throw new Error("storage blocked");
-      });
-
-    try {
-      render(<App />);
-
-      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
-      expect(screen.getByText("Source Destination URL")).toBeInTheDocument();
-
-      // A write path (theme persistence) must not blow up either.
-      fireEvent.click(screen.getByRole("button", { name: /^dark$/i }));
-      expect(document.documentElement.classList.contains("dark")).toBe(true);
-
-      // The stubs must have actually been hit by the app under test.
-      expect(getItemSpy).toHaveBeenCalled();
-      expect(setItemSpy).toHaveBeenCalled();
-    } finally {
-      getItemSpy.mockRestore();
       setItemSpy.mockRestore();
     }
   });

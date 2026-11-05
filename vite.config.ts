@@ -68,10 +68,6 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
-    server: {
-      // Note: the AI Studio DISABLE_HMR block was removed in the polish pass;
-      // HMR now runs with Vite's defaults.
-    },
     test: {
       environment: 'jsdom',
       globals: true,
