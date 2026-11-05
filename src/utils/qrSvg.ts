@@ -17,8 +17,14 @@ export interface GenerateQrSvgOptions {
   logo?: LogoConfig | null;
 }
 
-/** Quiet zone in modules — matches the `margin: 3` used by the PNG renderer. */
-const MARGIN = 3;
+/**
+ * Quiet zone in modules, shared with the PNG renderer (qrGenerator.ts).
+ * ISO/IEC 18004 recommends a quiet zone of at least four modules around the
+ * symbol for reliable scanning; four also matches the `qrcode` library's
+ * default margin. Kept in one place so PNG and SVG exports stay consistent.
+ */
+export const QUIET_ZONE_MODULES = 4;
+const MARGIN = QUIET_ZONE_MODULES;
 
 function escapeXml(value: string): string {
   return value

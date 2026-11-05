@@ -18,6 +18,19 @@ describe("isValidUrl", () => {
     expect(isValidUrl("bücher.de")).toBe(true);
   });
 
+  it("accepts bare hostnames (https:// is prepended) and bare localhost", () => {
+    expect(isValidUrl("example.com")).toBe(true);
+    expect(isValidUrl("localhost")).toBe(true);
+    expect(isValidUrl("localhost:3000")).toBe(true);
+  });
+
+  it("accepts unusual but valid URL characters without a protocol", () => {
+    expect(isValidUrl("example.com/~user")).toBe(true);
+    expect(isValidUrl("example.com/a,b")).toBe(true);
+    expect(isValidUrl("example.com/path_with_underscores")).toBe(true);
+    expect(isValidUrl("example.com/a(b)c")).toBe(true);
+  });
+
   it("accepts localhost ports and bare IPv4 addresses", () => {
     expect(isValidUrl("localhost:3000")).toBe(true);
     expect(isValidUrl("192.168.0.1")).toBe(true);

@@ -63,15 +63,22 @@ function isSameHistoryPayload(a: QrHistoryItem, b: QrHistoryItem): boolean {
 
 /**
  * History-size guard: uploaded logos are re-encoded from a canvas so a saved
- * entry never carries a multi-megabyte data URL (max 256px per side). On any
- * failure — loader errors, tainted canvas, missing 2d context — the original
- * data URL is kept so history saving still works.
+ * entry never carries a multi-megabyte data URL (max 256px per side).
+ *
+ * The original uploaded logo is preserved for the current editing session —
+ * the caller keeps the `logo` state untouched and only passes `src` here to
+ * obtain the copy written to history.
+ *
+ * Returns `null` when a safe, small copy cannot be produced (image load
+ * failure, missing canvas context, tainted canvas, or encoding failure).
+ * Callers must not fall back to the original `src`, otherwise an oversized
+ * original could silently enter localStorage.
  */
-async function downscaleLogoForHistory(src: string): Promise<string> {
+export async function downscaleLogoForHistory(src: string): Promise<string | null> {
   try {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext?.("2d");
-    if (!ctx) return src;
+    if (!ctx) return null;
 
     const image = new Image();
     image.crossOrigin = "anonymous";
@@ -90,9 +97,10 @@ async function downscaleLogoForHistory(src: string): Promise<string> {
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
     const downscaled = canvas.toDataURL("image/png");
-    return downscaled || src;
+    if (!downscaled || downscaled.length < 100) return null;
+    return downscaled;
   } catch {
-    return src;
+    return null;
   }
 }
 
@@ -365,7 +373,12 @@ export default function App() {
     let savedLogo: LogoConfig | null =
       logo && logo.enabled && logo.src ? { ...logo } : null;
     if (savedLogo?.type === "upload") {
-      savedLogo = { ...savedLogo, src: await downscaleLogoForHistory(savedLogo.src) };
+      const optimized = await downscaleLogoForHistory(savedLogo.src);
+      // Never let an oversized original enter localStorage. If optimization
+      // fails, drop the badge from the history entry: the entry itself (URL,
+      // colours, size) is still preserved, and the session logo stays intact
+      // in the editor.
+      savedLogo = optimized ? { ...savedLogo, src: optimized } : null;
     }
 
     const newItem: QrHistoryItem = {

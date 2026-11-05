@@ -371,4 +371,67 @@ describe("App", () => {
       setItemSpy.mockRestore();
     }
   });
+
+  // ── History restores badge background mode ────────────────────────────
+  it("restores custom badge mode across history (custom survives bg change)", async () => {
+    localStorage.clear();
+    render(<App />);
+
+    const getPreviewSrc = () => screen.getByAltText(/qr code for/i).getAttribute("src");
+
+    // Pick Globe preset
+    const presetBtn = screen.getByRole("button", { name: /^Globe$/i });
+    fireEvent.click(presetBtn);
+    await waitForFreshPreview(null);
+
+    // Set the badge background to an explicit custom colour ("Dark").
+    const badgeBgSpan = screen.getByText("Badge Base Background");
+    const badgeBgContainer = badgeBgSpan.closest("div");
+    const darkBtn = within(badgeBgContainer).getByRole("button", { name: /^Dark$/i });
+    fireEvent.click(darkBtn);
+    await waitForFreshPreview(null);
+
+    // Export so the entry (with custom badge mode) lands in history.
+    const download = screen.getByRole("button", { name: /^download$/i });
+    fireEvent.click(download);
+
+    await waitFor(() => {
+      const stored = localStorage.getItem("hk_qr_history");
+      return stored ? JSON.parse(stored).length > 0 : false;
+    });
+    const history = JSON.parse(localStorage.getItem("hk_qr_history")!);
+    const entry = history[0];
+    expect(entry.logo.badgeBgMode).toBe("custom");
+
+    // Now restore that entry: the custom badge mode must come back with it.
+    fireEvent.click(screen.getByRole("button", { name: /open recent qr history/i }));
+    fireEvent.click(screen.getByText(/^https:\/\/freesubqr\.vercel\.app$/i));
+
+    // Wait for the restored code to regenerate.
+    await waitFor(() => expect(getPreviewSrc()).toMatch(/^data:image\/png/), {
+      timeout: 8000,
+    });
+
+    // Changing the pattern background must not move the custom badge colour.
+    fireEvent.change(screen.getByLabelText("Pattern Background"), {
+      target: { value: "#fffbeb" },
+    });
+    await waitFor(() => expect(getPreviewSrc()).toMatch(/^data:image\/png/), {
+      timeout: 8000,
+    });
+
+    // Re-query badge controls fresh after the re-render, then assert the
+    // custom Dark badge is still selected and Match Pattern is not.
+    const restoredBadgeBgSpan = screen.getByText("Badge Base Background");
+    const restoredBadgeBgContainer = restoredBadgeBgSpan.closest("div");
+    const restoredDarkBtn = within(restoredBadgeBgContainer).getByRole("button", {
+      name: /^Dark$/i,
+    });
+    const restoredMatchBtn = within(restoredBadgeBgContainer).getByRole("button", {
+      name: /^Match Pattern$/i,
+    });
+
+    expect(restoredDarkBtn).toHaveClass("bg-neutral-900");
+    expect(restoredMatchBtn).not.toHaveClass("bg-neutral-900");
+  });
 });

@@ -1,6 +1,7 @@
 import QRCode from "qrcode";
 import { LogoConfig, ErrorCorrectionLevel } from "../types";
 import { getHighContrastColor } from "./presetLogos";
+import { QUIET_ZONE_MODULES } from "./qrSvg";
 
 export interface GenerateQrOptions {
   url: string;
@@ -51,7 +52,7 @@ export async function generateQrCode(options: GenerateQrOptions): Promise<string
   // 1. Generate base QR matrix
   const baseDataUrl = await QRCode.toDataURL(url, {
     width: size,
-    margin: 3,
+    margin: QUIET_ZONE_MODULES,
     color: {
       dark: qrColor,
       light: bgColor,
