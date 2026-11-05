@@ -19,7 +19,7 @@
     "assets:seo": "node scripts/generate-seo-assets.mjs"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.14",
+    "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^5.0.4",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
