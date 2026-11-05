@@ -1,11 +1,9 @@
-import { type WheelEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Download, Copy, Check, Share2, RefreshCw, ShieldAlert, FileCode } from "lucide-react";
 import { ErrorCorrectionLevel, LogoConfig } from "../types";
 
 interface PreviewPanelProps {
   theme: "light" | "dark";
-  onWheel: (event: WheelEvent<HTMLElement>) => void;
   qrDataUrl: string;
   /** Background color rendered behind the previewed code. */
   bgColor: string;
@@ -30,7 +28,6 @@ interface PreviewPanelProps {
 
 export default function PreviewPanel({
   theme,
-  onWheel,
   qrDataUrl,
   bgColor,
   errorMessage,
@@ -76,9 +73,8 @@ export default function PreviewPanel({
 
   return (
     <section
-      onWheel={onWheel}
       aria-label="QR code preview"
-      className="w-full lg:w-1/2 bg-neutral-100 dark:bg-neutral-950 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-8 xl:p-12 relative border-t lg:border-t-0 lg:border-l border-neutral-900/10 dark:border-neutral-800 transition-colors lg:h-full lg:overflow-y-auto custom-scrollbar"
+      className="w-full lg:w-1/2 bg-neutral-100 dark:bg-neutral-950 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-8 xl:p-12 relative border-t lg:border-t-0 lg:border-l border-neutral-900/10 dark:border-neutral-800 transition-colors lg:sticky lg:top-0 lg:self-start lg:h-screen"
     >
       {/* Polite live region: announces export feedback and share fallbacks. */}
       <div aria-live="polite" className="sr-only">
@@ -94,7 +90,7 @@ export default function PreviewPanel({
         }}
       />
 
-      <div className="relative group z-10 w-full max-w-md flex flex-col items-center my-auto">
+      <div className="relative group z-10 w-full max-w-md flex flex-col items-center my-auto pb-24 lg:pb-0">
 
         {/* Real QR Box - Geometric Balance styled container */}
         <div className="w-64 h-64 sm:w-72 sm:h-72 xl:w-80 xl:h-80 bg-white dark:bg-neutral-900 border-2 border-neutral-900 dark:border-neutral-100 p-5 sm:p-6 xl:p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,0.05)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,0.05)] flex flex-col items-center justify-center transition-all">
@@ -158,72 +154,74 @@ export default function PreviewPanel({
 
           {/* Bottom Action Buttons - Geometric Balance Layout */}
           <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <button
-              id="download-qr-btn"
-              onClick={onDownload}
-              disabled={!canExport}
-              className={`flex-1 px-4 py-3.5 font-bold uppercase tracking-wider text-xs font-mono flex items-center justify-center gap-1.5 rounded-none transition-all whitespace-nowrap ${primaryButtonClass}`}
-              title="Download PNG image file"
-            >
-              <span>Download</span>
-              <Download className="w-3.5 h-3.5" />
-            </button>
+            <div className="grid grid-cols-2 sm:flex sm:flex-row gap-3 w-full">
+              <button
+                id="download-qr-btn"
+                onClick={onDownload}
+                disabled={!canExport}
+                className={`flex-1 px-4 py-3.5 font-bold uppercase tracking-wider text-xs font-mono flex items-center justify-center gap-1.5 rounded-none transition-all whitespace-nowrap ${primaryButtonClass}`}
+                title="Download PNG image file"
+              >
+                <span>Download</span>
+                <Download className="w-3.5 h-3.5" />
+              </button>
 
-            <button
-              id="download-qr-svg-btn"
-              onClick={onDownloadSvg}
-              disabled={!canExport}
-              className={`flex-1 px-4 py-3.5 font-bold uppercase tracking-wider text-xs font-mono flex items-center justify-center gap-1.5 rounded-none transition-all whitespace-nowrap ${secondaryButtonClass}`}
-              title="Download scalable SVG image file"
-            >
-              <span>SVG</span>
-              <FileCode className="w-3.5 h-3.5" />
-            </button>
+              <button
+                id="download-qr-svg-btn"
+                onClick={onDownloadSvg}
+                disabled={!canExport}
+                className={`flex-1 px-4 py-3.5 font-bold uppercase tracking-wider text-xs font-mono flex items-center justify-center gap-1.5 rounded-none transition-all whitespace-nowrap ${secondaryButtonClass}`}
+                title="Download scalable SVG image file"
+              >
+                <span>SVG</span>
+                <FileCode className="w-3.5 h-3.5" />
+              </button>
 
-            <button
-              id="copy-qr-btn"
-              onClick={onCopy}
-              disabled={!canExport}
-              className={`flex-1 px-4 py-3.5 font-bold uppercase tracking-wider text-xs font-mono flex items-center justify-center gap-1.5 rounded-none transition-all whitespace-nowrap ${secondaryButtonClass}`}
-              title="Copy QR image to clipboard"
-            >
-              {copied ? (
-                <>
-                  <span>Copied!</span>
-                  <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                </>
-              ) : (
-                <>
-                  <span>Copy</span>
-                  <Copy className="w-3.5 h-3.5" />
-                </>
-              )}
-            </button>
+              <button
+                id="copy-qr-btn"
+                onClick={onCopy}
+                disabled={!canExport}
+                className={`flex-1 px-4 py-3.5 font-bold uppercase tracking-wider text-xs font-mono flex items-center justify-center gap-1.5 rounded-none transition-all whitespace-nowrap ${secondaryButtonClass}`}
+                title="Copy QR image to clipboard"
+              >
+                {copied ? (
+                  <>
+                    <span>Copied!</span>
+                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  </>
+                ) : (
+                  <>
+                    <span>Copy</span>
+                    <Copy className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </button>
 
-            <button
-              id="share-qr-btn"
-              onClick={onShare}
-              disabled={!canExport}
-              className={`flex-1 px-4 py-3.5 font-bold uppercase tracking-wider text-xs font-mono flex items-center justify-center gap-1.5 rounded-none transition-all whitespace-nowrap ${secondaryButtonClass}`}
-              title="Share QR code image via Web Share API"
-            >
-              {shareStatus === "shared" ? (
-                <>
-                  <span>Shared!</span>
-                  <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                </>
-              ) : shareStatus === "copied" ? (
-                <>
-                  <span>Link Copied</span>
-                  <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                </>
-              ) : (
-                <>
-                  <span>Share</span>
-                  <Share2 className="w-3.5 h-3.5" />
-                </>
-              )}
-            </button>
+              <button
+                id="share-qr-btn"
+                onClick={onShare}
+                disabled={!canExport}
+                className={`flex-1 px-4 py-3.5 font-bold uppercase tracking-wider text-xs font-mono flex items-center justify-center gap-1.5 rounded-none transition-all whitespace-nowrap ${secondaryButtonClass}`}
+                title="Share QR code image via Web Share API"
+              >
+                {shareStatus === "shared" ? (
+                  <>
+                    <span>Shared!</span>
+                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  </>
+                ) : shareStatus === "copied" ? (
+                  <>
+                    <span>Link Copied</span>
+                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  </>
+                ) : (
+                  <>
+                    <span>Share</span>
+                    <Share2 className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Share feedback toast if fallback occurred */}
@@ -242,6 +240,24 @@ export default function PreviewPanel({
         </div>
 
       </div>
+
+      {/* Mobile sticky bottom bar with QR thumbnail and Download button */}
+      {qrDataUrl && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-neutral-950/95 backdrop-blur border-t border-neutral-900/10 dark:border-neutral-800 px-4 py-2 flex items-center gap-3">
+          <div className="w-12 h-12 border border-neutral-900 dark:border-neutral-100 flex-shrink-0 bg-white" style={{ backgroundColor: bgColor }}>
+            <img src={qrDataUrl} alt={`QR code for ${previewLabel}`} className="w-full h-full object-contain p-0.5" />
+          </div>
+          <button
+            onClick={onDownload}
+            disabled={!canExport}
+            className={`flex-1 px-4 py-2.5 font-bold uppercase tracking-wider text-xs font-mono flex items-center justify-center gap-1.5 rounded-none transition-all ${primaryButtonClass}`}
+            title="Download PNG image file"
+          >
+            <span>Download</span>
+            <Download className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
     </section>
   );
 }

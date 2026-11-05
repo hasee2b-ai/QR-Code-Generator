@@ -1,4 +1,4 @@
-import { type RefObject, useId } from "react";
+import { useId } from "react";
 import { Check, Globe, Trash2, History, Link2, Type, Wifi } from "lucide-react";
 import LogoSelector from "./LogoSelector";
 import { ContentType, ErrorCorrectionLevel, LogoConfig, WifiConfig } from "../types";
@@ -6,7 +6,6 @@ import { BACK_COLOR_PRESETS, FOR_COLOR_PRESETS, SIZE_PRESETS, TEST_PRESETS } fro
 import { isValidUrl } from "../utils/qrContent";
 
 interface GeneratorPanelProps {
-  panelRef: RefObject<HTMLElement | null>;
   theme: "light" | "dark";
   contentType: ContentType;
   onContentTypeChange: (contentType: ContentType) => void;
@@ -44,7 +43,7 @@ const WIFI_SECURITY_OPTIONS: { id: "WPA" | "WEP" | "nopass"; label: string }[] =
 ];
 
 export default function GeneratorPanel({
-  panelRef,
+  theme,
   contentType,
   onContentTypeChange,
   url,
@@ -63,7 +62,6 @@ export default function GeneratorPanel({
   onErrorCorrectionChange,
   logo,
   onLogoChange,
-  theme,
   historyCount,
   onOpenHistory,
   onClearInput,
@@ -120,10 +118,9 @@ export default function GeneratorPanel({
 
   return (
     <main
-      ref={panelRef}
       id="generator"
       aria-label="QR code generator"
-      className="w-full lg:w-1/2 border-r border-neutral-900/10 dark:border-neutral-800 p-6 sm:p-12 lg:p-12 xl:p-16 flex flex-col justify-start bg-white dark:bg-neutral-900 transition-colors lg:h-full lg:overflow-y-auto custom-scrollbar scroll-mt-20"
+      className="w-full lg:w-1/2 border-r border-neutral-900/10 dark:border-neutral-800 p-6 sm:p-12 lg:p-12 xl:p-16 flex flex-col justify-start bg-white dark:bg-neutral-900 transition-colors scroll-mt-20"
     >
       <div className="max-w-xl w-full mx-auto pb-12 lg:pb-16">
 
@@ -131,7 +128,7 @@ export default function GeneratorPanel({
         <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 block">
           Free · Instant · No Sign-up
         </span>
-        <h1 className="text-4xl sm:text-5xl font-black text-neutral-900 dark:text-white leading-none mb-4 uppercase tracking-tighter italic font-display">
+        <h1 className="text-4xl sm:text-5xl font-black text-neutral-900 dark:text-white leading-none mb-4 uppercase tracking-tight italic font-display" style={{ wordSpacing: "0.1em" }}>
           Free QR Code<br />Generator
         </h1>
         <p className="text-neutral-500 dark:text-neutral-400 mb-10 leading-relaxed text-sm sm:text-base">
@@ -400,106 +397,100 @@ export default function GeneratorPanel({
             </div>
           )}
 
-          {/* Color matrix row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-neutral-900/10 dark:border-neutral-800">
+        {/* Color matrix row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-neutral-900/10 dark:border-neutral-800">
 
-            {/* Dark Code Matrix Color picker */}
-            <div className="space-y-2">
-              <label
-                htmlFor={qrColorInputId}
-                className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
-              >
-                Matrix Block Color
-              </label>
-              <div className="flex items-center gap-2">
-                <div className="flex flex-wrap gap-1.5 flex-1">
-                  {FOR_COLOR_PRESETS.map((color) => (
-                    <button
-                      key={color.name}
-                      onClick={() => onQrColorChange(color.hex)}
-                      className="w-6 h-6 border-2 border-neutral-900 dark:border-neutral-600 relative transition-transform active:scale-95 rounded-none cursor-pointer"
-                      style={{ backgroundColor: color.hex }}
-                      title={color.name}
-                    >
-                      {qrColor.toLowerCase() === color.hex.toLowerCase() && (
-                        <span className="absolute inset-0 flex items-center justify-center text-white mix-blend-difference">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="pl-2 border-l border-neutral-200 dark:border-neutral-700">
-                  <label
-                    htmlFor={qrColorInputId}
-                    className="relative w-7 h-7 border-2 border-neutral-900 dark:border-neutral-300 cursor-pointer overflow-hidden flex items-center justify-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors rounded-none"
+          {/* Dark Code Matrix Color picker */}
+          <div className="space-y-2">
+            <label
+              htmlFor={qrColorInputId}
+              className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+            >
+              Matrix Block Color
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 flex-1">
+                {FOR_COLOR_PRESETS.map((color) => (
+                  <button
+                    key={color.name}
+                    onClick={() => onQrColorChange(color.hex)}
+                    className="w-8 h-8 border-2 border-neutral-900 dark:border-neutral-600 relative transition-transform active:scale-95 rounded-none cursor-pointer"
+                    style={{ backgroundColor: color.hex }}
+                    title={color.name}
                   >
-                    <input
-                      id={qrColorInputId}
-                      type="color"
-                      value={qrColor}
-                      onChange={(e) => onQrColorChange(e.target.value)}
-                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                    />
-                    <div
-                      className="w-4 h-4 border border-neutral-900/10 dark:border-neutral-100/30"
-                      style={{ backgroundColor: qrColor }}
-                    />
-                  </label>
-                </div>
+                    {qrColor.toLowerCase() === color.hex.toLowerCase() && (
+                      <span className="absolute inset-0 flex items-center justify-center text-white mix-blend-difference">
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      </span>
+                    )}
+                  </button>
+                ))}
+                <label
+                  htmlFor={qrColorInputId}
+                  className="relative w-8 h-8 border-2 border-neutral-900 dark:border-neutral-300 cursor-pointer overflow-hidden flex items-center justify-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors rounded-none"
+                >
+                  <input
+                    id={qrColorInputId}
+                    type="color"
+                    value={qrColor}
+                    onChange={(e) => onQrColorChange(e.target.value)}
+                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                  />
+                  <div
+                    className="w-4 h-4 border border-neutral-900/10 dark:border-neutral-100/30"
+                    style={{ backgroundColor: qrColor }}
+                  />
+                </label>
               </div>
             </div>
-
-            {/* Background matrix Color picker */}
-            <div className="space-y-2">
-              <label
-                htmlFor={bgColorInputId}
-                className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
-              >
-                Pattern Background
-              </label>
-              <div className="flex items-center gap-2">
-                <div className="flex flex-wrap gap-1.5 flex-1">
-                  {BACK_COLOR_PRESETS.map((color) => (
-                    <button
-                      key={color.name}
-                      onClick={() => onBgColorChange(color.hex)}
-                      className="w-6 h-6 border-2 border-neutral-300 dark:border-neutral-700 relative transition-transform active:scale-95 rounded-none cursor-pointer"
-                      style={{ backgroundColor: color.hex }}
-                      title={color.name}
-                    >
-                      {bgColor.toLowerCase() === color.hex.toLowerCase() && (
-                        <span className="absolute inset-0 flex items-center justify-center text-neutral-950">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="pl-2 border-l border-neutral-200 dark:border-neutral-700">
-                  <label
-                    htmlFor={bgColorInputId}
-                    className="relative w-7 h-7 border-2 border-neutral-900 dark:border-neutral-300 cursor-pointer overflow-hidden flex items-center justify-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors rounded-none"
-                  >
-                    <input
-                      id={bgColorInputId}
-                      type="color"
-                      value={bgColor}
-                      onChange={(e) => onBgColorChange(e.target.value)}
-                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                    />
-                    <div
-                      className="w-4 h-4 border border-neutral-900/10 dark:border-neutral-100/30"
-                      style={{ backgroundColor: bgColor }}
-                    />
-                  </label>
-                </div>
-              </div>
-            </div>
-
           </div>
+
+          {/* Background matrix Color picker */}
+          <div className="space-y-2">
+            <label
+              htmlFor={bgColorInputId}
+              className="block text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest"
+            >
+              Pattern Background
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 flex-1">
+                {BACK_COLOR_PRESETS.map((color) => (
+                  <button
+                    key={color.name}
+                    onClick={() => onBgColorChange(color.hex)}
+                    className="w-8 h-8 border-2 border-neutral-300 dark:border-neutral-700 relative transition-transform active:scale-95 rounded-none cursor-pointer"
+                    style={{ backgroundColor: color.hex }}
+                    title={color.name}
+                  >
+                    {bgColor.toLowerCase() === color.hex.toLowerCase() && (
+                      <span className="absolute inset-0 flex items-center justify-center text-neutral-950">
+                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      </span>
+                    )}
+                  </button>
+                ))}
+                <label
+                  htmlFor={bgColorInputId}
+                  className="relative w-8 h-8 border-2 border-neutral-900 dark:border-neutral-300 cursor-pointer overflow-hidden flex items-center justify-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors rounded-none"
+                >
+                  <input
+                    id={bgColorInputId}
+                    type="color"
+                    value={bgColor}
+                    onChange={(e) => onBgColorChange(e.target.value)}
+                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                  />
+                  <div
+                    className="w-4 h-4 border border-neutral-900/10 dark:border-neutral-100/30"
+                    style={{ backgroundColor: bgColor }}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+
+        </div>
 
           {/* Sizing Export Standard (Brutalist blocks) */}
           <div className="space-y-2 pt-4 border-t border-neutral-900/10 dark:border-neutral-800">

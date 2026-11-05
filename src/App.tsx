@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef, useMemo, type WheelEvent } from "react";
+import { useState, useEffect, useMemo } from "react";
 import SiteHeader from "./components/SiteHeader";
 import GeneratorPanel from "./components/GeneratorPanel";
 import PreviewPanel from "./components/PreviewPanel";
@@ -83,7 +83,6 @@ const EMPTY_STATES: Record<ContentType, { title: string; hint: string }> = {
 };
 
 export default function App() {
-  const leftPanelRef = useRef<HTMLElement>(null);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof window !== "undefined") {
       const saved = storageGet("hk_qr_theme");
@@ -488,13 +487,6 @@ export default function App() {
     else setWifi(DEFAULT_WIFI);
   };
 
-  // Forward mouse wheel scrolling over the fixed right panel to the left parameters panel on desktop
-  const handleWheel = (e: WheelEvent<HTMLElement>) => {
-    if (leftPanelRef.current && window.innerWidth >= 1024) {
-      leftPanelRef.current.scrollBy({ top: e.deltaY, behavior: "auto" });
-    }
-  };
-
   const emptyState = EMPTY_STATES[contentType];
 
   return (
@@ -509,14 +501,11 @@ export default function App() {
         onOpenHistory={() => setIsHistoryOpen(true)}
       />
 
-      {/* Main Workspace Split Layout — locked to the space between the header
-          (h-20) and status bar (h-14) on desktop so panels scroll internally;
-          SEO content sections follow below the fold. */}
-      <div className="flex flex-col lg:flex-row lg:overflow-hidden min-h-0 lg:h-[calc(100vh_-_8.5rem)]">
+      {/* Main Workspace Split Layout */}
+      <div className="flex flex-col lg:flex-row min-h-0">
 
         {/* Left Side: Parameters Panel */}
         <GeneratorPanel
-          panelRef={leftPanelRef}
           theme={theme}
           contentType={contentType}
           onContentTypeChange={setContentType}
@@ -544,7 +533,6 @@ export default function App() {
         {/* Right Side: Result Output Workspace with styled background */}
         <PreviewPanel
           theme={theme}
-          onWheel={handleWheel}
           qrDataUrl={qrDataUrl}
           bgColor={bgColor}
           errorMessage={errorMessage}

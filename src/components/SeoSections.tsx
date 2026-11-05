@@ -18,7 +18,7 @@ export default function SeoSections() {
           </span>
           <h2
             id="features-heading"
-            className="text-3xl sm:text-4xl font-black uppercase italic font-display tracking-tight text-neutral-900 dark:text-white mb-4"
+            className="text-3xl sm:text-4xl font-black uppercase italic font-display tracking-tight text-neutral-900 dark:text-white mb-4" style={{ wordSpacing: "0.08em" }}
           >
             Everything a QR code maker should be
           </h2>
@@ -55,7 +55,7 @@ export default function SeoSections() {
           </span>
           <h2
             id="how-it-works-heading"
-            className="text-3xl sm:text-4xl font-black uppercase italic font-display tracking-tight text-neutral-900 dark:text-white mb-10"
+            className="text-3xl sm:text-4xl font-black uppercase italic font-display tracking-tight text-neutral-900 dark:text-white mb-10" style={{ wordSpacing: "0.08em" }}
           >
             How to make a QR code
           </h2>
@@ -80,11 +80,11 @@ export default function SeoSections() {
         {/* FAQ — kept in sync with the FAQPage JSON-LD via src/data/content.ts */}
         <section id="faq" aria-labelledby="faq-heading" className="scroll-mt-24">
           <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-2 block">
-            Answers
+            Quick answers
           </span>
           <h2
             id="faq-heading"
-            className="text-3xl sm:text-4xl font-black uppercase italic font-display tracking-tight text-neutral-900 dark:text-white mb-8"
+            className="text-3xl sm:text-4xl font-black uppercase italic font-display tracking-tight text-neutral-900 dark:text-white mb-8" style={{ wordSpacing: "0.08em" }}
           >
             QR code generator FAQ
           </h2>
