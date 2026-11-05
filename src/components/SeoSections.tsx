@@ -23,7 +23,7 @@ export default function SeoSections() {
             Everything a QR code maker should be
           </h2>
           <p className="text-neutral-500 dark:text-neutral-400 max-w-2xl leading-relaxed mb-10 text-sm sm:text-base">
-            HK QR is a free online QR code generator for websites, landing pages, social profiles
+            FREESUBQR is a free online QR code generator for websites, landing pages, social profiles
             and print campaigns. Paste a link, style your code, and export a crisp, scannable PNG —
             no account, no watermark, no upload.
           </p>

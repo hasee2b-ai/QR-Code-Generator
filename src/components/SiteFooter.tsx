@@ -7,7 +7,7 @@ export default function SiteFooter() {
     >
       <div className="flex items-center gap-2.5">
         <span aria-hidden="true" className="w-3 h-3 border-2 border-neutral-900 dark:border-white inline-block" />
-        <span>© {new Date().getFullYear()} HK QR // Free QR code generator</span>
+        <span>© {new Date().getFullYear()} FREESUBQR // Free QR code generator</span>
       </div>
       <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-6 gap-y-2">
         <a href="#generator" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Generator</a>

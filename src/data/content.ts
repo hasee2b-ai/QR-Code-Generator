@@ -84,7 +84,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     q: "Are these QR codes free?",
-    a: "Yes. HK QR is free with no signup, no watermarks and no limit on how many codes you generate.",
+    a: "Yes. FREESUBQR is free with no signup, no watermarks and no limit on how many codes you generate.",
   },
   {
     q: "Can I customize QR code colors and add a logo?",
@@ -104,7 +104,7 @@ export const FAQS: FaqItem[] = [
   },
 ];
 
-const APP_NAME = "HK QR – Free QR Code Generator";
+const APP_NAME = "FREESUBQR – Free QR Code Generator";
 const APP_DESCRIPTION =
   "Free online QR code generator. Create, customize and download high-resolution QR codes for any URL — colors, logos, error correction and print-ready PNG export up to 3000px. No signup required.";
 

@@ -1,4 +1,4 @@
-# SEO — HK QR (Free QR Code Generator)
+# SEO — FREESUBQR (Free QR Code Generator)
 
 This document covers the on-page SEO implemented in this repo and the steps to
 complete **after** the site is deployed.
@@ -37,7 +37,7 @@ npm run assets:seo
 ## What was implemented (on-page SEO)
 
 ### `index.html` (static — visible to crawlers without executing JS)
-- **Title tag** with the primary keyword + brand: `Free QR Code Generator – Create & Download QR Codes | HK QR`
+- **Title tag** with the primary keyword + brand: `Free QR Code Generator – Create & Download QR Codes | FREESUBQR`
 - **Meta description** (~155 chars) with a call to action.
 - **Canonical URL**, `robots` meta (`index, follow, max-image-preview:large`).
 - **Open Graph + Twitter Card** tags (title, description, image1200×630, alt text) — tested preview image generated at `public/og-image.png`.

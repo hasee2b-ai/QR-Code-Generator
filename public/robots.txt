@@ -1,4 +1,4 @@
-# HK QR – Free QR Code Generator
+# FREESUBQR – Free QR Code Generator
 # https://freesubqr.vercel.app/  (production URL — update if the domain changes)
 
 User-agent: *

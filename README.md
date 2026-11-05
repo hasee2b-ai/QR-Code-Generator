@@ -1,8 +1,8 @@
-# HK QR — Free QR Code Generator
+# FREESUBQR — Free QR Code Generator
 
 A fast, private, browser-only QR code generator. Paste a link, style the code, add a logo, and export a print-ready PNG up to **3000 × 3000 px** — no signup, no watermarks, no uploads.
 
-![HK QR preview](public/og-image.png)
+![FREESUBQR preview](public/og-image.png)
 
 ---
 
