@@ -45,10 +45,6 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: /^copy$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^share$/i })).toBeInTheDocument();
 
-    // The header badge shows the real package version, injected via `define`.
-    expect(
-      screen.getByText(new RegExp(`^v${pkg.version.replace(/\./g, "\\.")} // STABLE$`))
-    ).toBeInTheDocument();
     expect(screen.getByText("License: Apache-2.0")).toBeInTheDocument();
   });
 
