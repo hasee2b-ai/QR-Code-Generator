@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { History, Sun, Moon, Menu, X } from "lucide-react";
+import { History, Sun, Moon } from "lucide-react";
 
 interface SiteHeaderProps {
   theme: "light" | "dark";
@@ -18,7 +18,6 @@ export default function SiteHeader({
   onOpenHistory,
 }: SiteHeaderProps) {
   const [activeSection, setActiveSection] = useState("generator");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -41,17 +40,6 @@ export default function SiteHeader({
     });
 
     return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setMobileMenuOpen(false);
-      }
-    };
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
   const navLinks = [
@@ -116,7 +104,6 @@ export default function SiteHeader({
           <a
             key={link.href}
             href={link.href}
-            onClick={() => setMobileMenuOpen(false)}
             className={isActive(link.href) ? "text-neutral-900 dark:text-white border-b-2 border-neutral-900 dark:border-white pb-1" : "hover:text-neutral-900 dark:hover:text-white pb-1"}
           >
             {link.label}
@@ -185,34 +172,8 @@ export default function SiteHeader({
           </button>
         </div>
 
-        {/* Mobile menu button */}
-        <button
-          type="button"
-          onClick={() => setMobileMenuOpen((open) => !open)}
-          aria-expanded={mobileMenuOpen}
-          aria-label="Toggle navigation menu"
-          className="md:hidden flex items-center justify-center w-9 h-9 border-2 border-neutral-900 dark:border-neutral-200 bg-white dark:bg-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.7)] text-neutral-900 dark:text-white"
-        >
-          {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-        </button>
       </div>
 
-      {mobileMenuOpen && (
-        <div className="md:hidden absolute top-20 left-0 right-0 bg-white dark:bg-neutral-950 border-b border-neutral-900/10 dark:border-neutral-800 px-6 py-4 flex flex-col gap-3 z-50">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={(e) => {
-                setMobileMenuOpen(false);
-              }}
-              className={isActive(link.href) ? "text-neutral-900 dark:text-white font-semibold uppercase tracking-widest text-xs" : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white font-semibold uppercase tracking-widest text-xs"}
-            >
-              {link.label}
-            </a>
-          ))}
-        </div>
-      )}
     </header>
   );
 }
