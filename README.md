@@ -200,7 +200,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs `npm ci` → `npm run lint` →
 ### Generation pipeline
 
 1. **Input normalization** — `buildQrContent()` in `src/utils/qrContent.ts` picks the payload for the active content type: URLs get `https://` prefixed when the protocol is missing, text is encoded raw, and the Wi-Fi form is serialized into a `WIFI:T:...;S:...;P:...;;` payload (with reserved characters escaped).
-2. **Matrix encoding** — `generateQrCode()` in `src/utils/qrGenerator.ts` calls `QRCode.toDataURL()` with the selected size, colors, margin (`3` modules), and error-correction level.
+2. **Matrix encoding** — `generateQrCode()` in `src/utils/qrGenerator.ts` calls `QRCode.toDataURL()` with the selected size, colors, margin (`4` modules quiet zone, shared with the SVG export via `QUIET_ZONE_MODULES`), and error-correction level.
 3. **Logo compositing** — when a logo is active, a canvas of the requested size is created, the base QR is drawn onto it, and a badge is rendered in the center:
    - The badge background clears the modules underneath.
    - The shape is drawn as a circle, rounded rectangle, or square with a high-contrast hairline border.

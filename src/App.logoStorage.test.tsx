@@ -198,3 +198,123 @@ describe("history stores an optimized logo while the session keeps the original"
     expect(localStorage.getItem("hk_qr_history")).toContain(STUBBED_SMALL);
   });
 });
+
+describe("localStorage failure handling for logo history", () => {
+  beforeEach(setupStubs);
+  afterEach(teardownStubs);
+
+  it("notifies the user and keeps the in-session entry when the quota is exceeded", async () => {
+    render(<App />);
+
+    const getPreviewSrc = () =>
+      screen.getByAltText(/qr code for/i).getAttribute("src");
+    await waitFor(() => expect(getPreviewSrc()).toMatch(/^data:image\/png/), { timeout: 8000 });
+
+    // Upload a logo so the save path runs through downscaleLogoForHistory.
+    fireEvent.click(screen.getByRole("button", { name: /upload file/i }));
+    const file = new File(["logo-bytes"], "logo.png", { type: "image/png" });
+    const input = screen.getByLabelText("Upload logo image") as HTMLInputElement;
+    Object.defineProperty(input, "files", { value: [file], configurable: true });
+    fireEvent.change(input, { target: { files: [file] } });
+    const uploadedImg = await screen.findByAltText("Uploaded Logo");
+    MockImage.sizes.set(uploadedImg.getAttribute("src")!, { width: 2000, height: 2000 });
+
+    // Simulate QuotaExceededError on every persistence write.
+    const setItemSpy = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new DOMException("QuotaExceededError", "QuotaExceededError");
+      });
+
+    try {
+      fireEvent.click(screen.getByRole("button", { name: /^download$/i }));
+
+      // The user is told the save failed…
+      const statusEl = await screen.findByRole("status");
+      expect(statusEl).toHaveTextContent(/couldn't save/i);
+
+      // …and the entry itself is still kept for the current session: the
+      // quota failure must not wipe the freshly recorded item from state.
+      fireEvent.click(screen.getByRole("button", { name: /open recent qr history/i }));
+      const sidebar = await screen.findByRole("dialog");
+      expect(within(sidebar).getByText(/^https:\/\/freesubqr\.vercel\.app$/i)).toBeInTheDocument();
+    } finally {
+      setItemSpy.mockRestore();
+    }
+  });
+});
+
+describe("existing history with old-format entries still loads", () => {
+  beforeEach(setupStubs);
+  afterEach(teardownStubs);
+
+  it("loads, lists and restores a legacy entry (no badgeBgMode, no contentType)", async () => {
+    // Written by an older version of the app: `contentType` and
+    // `badgeBgMode` did not exist yet, and the badge background simply
+    // matched the pattern background at save time.
+    const legacyEntry = {
+      id: "legacy-1",
+      url: "https://legacy.example.com/page",
+      timestamp: Date.now() - 60 * 60 * 1000,
+      qrColor: "#000000",
+      bgColor: "#ffffff",
+      size: 750,
+      errorCorrection: "M",
+      logo: {
+        enabled: true,
+        src: "data:image/png;base64,AAAA",
+        type: "upload",
+        name: "old-logo.png",
+        sizeRatio: 0.22,
+        shape: "rounded",
+        paddingRatio: 0.15,
+        bgColor: "#ffffff",
+      },
+    };
+    localStorage.setItem("hk_qr_history", JSON.stringify([legacyEntry]));
+
+    render(<App />);
+
+    const getPreviewSrc = () =>
+      screen.getByAltText(/qr code for/i).getAttribute("src");
+    await waitFor(() => expect(getPreviewSrc()).toMatch(/^data:image\/png/), { timeout: 8000 });
+
+    // The entry is listed.
+    fireEvent.click(screen.getByRole("button", { name: /open recent qr history/i }));
+    const sidebar = await screen.findByRole("dialog");
+    const entry = within(sidebar).getByText(/^https:\/\/legacy\.example\.com\/page$/i);
+    expect(entry).toBeInTheDocument();
+
+    // Restoring it works: content type defaults to URL, the legacy logo is
+    // brought back, and the badge mode is inferred ("pattern" here, because
+    // the stored badge colour equals the stored pattern background).
+    fireEvent.click(entry);
+
+    const restoredInput = await screen.findByLabelText(
+      "Source Destination URL",
+    ) as HTMLInputElement;
+    await waitFor(() => expect(restoredInput.value).toBe("https://legacy.example.com/page"));
+
+    // The upload tab shows the restored legacy upload.
+    fireEvent.click(screen.getByRole("button", { name: /upload file/i }));
+    expect(await screen.findByAltText("Uploaded Logo")).toHaveAttribute(
+      "src",
+      "data:image/png;base64,AAAA",
+    );
+
+    const badgeBgSpan = screen.getByText("Badge Base Background");
+    const badgeBgContainer = badgeBgSpan.closest("div");
+    expect(
+      within(badgeBgContainer).getByRole("button", { name: /^Match Pattern$/i }),
+    ).toHaveClass("bg-neutral-900"); // pattern mode inferred as selected
+
+    // Saving over the legacy entry must not throw and must keep the key.
+    fireEvent.click(screen.getByRole("button", { name: /^download$/i }));
+    await waitFor(() => {
+      const stored = localStorage.getItem("hk_qr_history");
+      return stored ? JSON.parse(stored).some((e: QrHistoryItem) => e.id === "legacy-1") : false;
+    });
+    const stored = JSON.parse(localStorage.getItem("hk_qr_history")!) as QrHistoryItem[];
+    expect(stored.some((e) => e.url === "https://legacy.example.com/page")).toBe(true);
+  });
+});

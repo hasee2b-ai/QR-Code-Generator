@@ -2,24 +2,22 @@ import { describe, expect, it } from "vitest";
 import QRCode from "qrcode";
 import { PNG } from "pngjs";
 import jsQR from "jsqr";
-import { generateQrSvg } from "./qrSvg";
-import { QUIET_ZONE_MODULES } from "./qrSvg";
+import { Resvg } from "@resvg/resvg-js";
+import { generateQrSvg, QUIET_ZONE_MODULES } from "./qrSvg";
 import { ErrorCorrectionLevel, LogoConfig } from "../types";
 
 /**
  * Genuine QR decoding verification.
  *
- * jsdom has no real canvas (and `canvas`/node-canvas is a heavy native
- * dependency we deliberately do not add), so the browser's canvas-based PNG
- * renderer cannot be decoded pixel-for-pixel here. Instead we use the same
- * encoder the app uses (`QRCode.create`) to build the real QR matrix, render
- * it to a bitmap, encode that bitmap to a real PNG via `pngjs` (already a
- * devDependency), decode the PNG back to pixels, and run `jsQR` over it.
- * This verifies the payload the app encodes is genuinely scannable.
+ * PNG round-trip: the real encoder matrix (`QRCode.create`) is rendered to
+ * RGBA, encoded to a real PNG via `pngjs`, decoded back to pixels, and run
+ * through `jsQR`. The decoder and encoder are never mocked.
  *
- * For SVG exports we parse the generated `<path>` module commands back into a
- * matrix (a logical rasterization of the vector image), render that to pixels
- * and decode with `jsQR` — verifying the SVG encodes the same payload.
+ * SVG round-trip: `generateQrSvg` output is rasterized to real pixels with
+ * `@resvg/resvg-js` (a native prebuilt SVG renderer — no canvas needed, ships
+ * prebuilt binaries for the exact platforms CI runs on, so no compilation),
+ * then decoded with `jsQR`. This exercises the actual SVG document,
+ * including the painted center badge and its embedded logo image.
  */
 
 type QrEcc = "L" | "M" | "Q" | "H";
@@ -135,54 +133,53 @@ describe("genuine QR decoding (png round-trip via jsQR)", () => {
   it("decodes a QR with a centre logo (level H, masked centre)", () => {
     const payload = "https://freesubqr.vercel.app";
     // Level H (30% redundancy) is what the app forces when a logo is active.
-    expect(roundTripPng(payload, "H", 0.30)).toBe(payload);
+    expect(roundTripPng(payload, "H", 0.22)).toBe(payload);
+  });
+
+  it("decodes QRs with every supported centre-logo size ratio (H)", () => {
+    const payload = "https://freesubqr.vercel.app";
+    // The app allows badge sizes around 0.18–0.26 of the symbol.
+    for (const sizeRatio of [0.18, 0.22, 0.26]) {
+      expect(roundTripPng(payload, "H", sizeRatio)).toBe(payload);
+    }
   });
 });
 
-describe("genuine QR decoding (SVG exports, logically rasterized)", () => {
-  /** Rebuilds the module grid from the generated SVG `<path>` commands. */
-  function svgToGrid(svg: string): { total: number; size: number; grid: boolean[][] } {
-    const viewBox = svg.match(/viewBox="0 0 (\d+) (\d+)"/);
-    if (!viewBox) throw new Error("viewBox missing from generated SVG");
-    const total = Number(viewBox[1]);
-    const margin = QUIET_ZONE_MODULES;
-    const size = total - margin * 2;
-    const grid: boolean[][] = Array.from({ length: total }, () => Array(total).fill(false));
-    const moduleRe = /M(\d+) (\d+)h1v1h-1z/g;
-    let match: RegExpExecArray | null;
-    while ((match = moduleRe.exec(svg))) {
-      const x = Number(match[1]);
-      const y = Number(match[2]);
-      if (x >= 0 && x < total && y >= 0 && y < total) grid[y][x] = true;
-    }
-    return { total, size, grid };
+/** A solid-colour PNG data URI used as a stand-in uploaded logo badge image. */
+function makeSolidColorDataUri(r: number, g: number, b: number, dimension = 24): string {
+  const png = new PNG({ width: dimension, height: dimension });
+  for (let i = 0; i < png.data.length; i += 4) {
+    png.data[i] = r; png.data[i + 1] = g; png.data[i + 2] = b; png.data[i + 3] = 255;
   }
+  return "data:image/png;base64," + PNG.sync.write(png).toString("base64");
+}
 
-  function decodeSvg(svg: string): string {
-    const { total, grid } = svgToGrid(svg);
-    const moduleSize = 4;
-    const width = total * moduleSize;
-    const height = total * moduleSize;
-    const data = new Uint8ClampedArray(width * height * 4);
-    for (let i = 0; i < data.length; i += 4) {
-      data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255;
-    }
-    for (let row = 0; row < total; row++) {
-      for (let col = 0; col < total; col++) {
-        if (!grid[row][col]) continue;
-        const ox = col * moduleSize;
-        const oy = row * moduleSize;
-        for (let dy = 0; dy < moduleSize; dy++) {
-          for (let dx = 0; dx < moduleSize; dx++) {
-            const i = ((oy + dy) * width + (ox + dx)) * 4;
-            data[i] = 0; data[i + 1] = 0; data[i + 2] = 0; data[i + 3] = 255;
-          }
-        }
-      }
-    }
-    return decodeQr(data, width, height);
-  }
+const ICON_COLOR = { r: 220, g: 38, b: 38 }; // #dc2626
 
+function makeLogo(shape: LogoConfig["shape"], sizeRatio = 0.22): LogoConfig {
+  return {
+    enabled: true,
+    src: makeSolidColorDataUri(ICON_COLOR.r, ICON_COLOR.g, ICON_COLOR.b),
+    type: "upload",
+    name: "logo",
+    sizeRatio,
+    shape,
+    paddingRatio: 0.18,
+    bgColor: "#ffffff",
+  };
+}
+
+/**
+ * Rasterizes a generated SVG into real RGBA pixels via resvg (the same library
+ * class browsers use for SVG rendering; no canvas package required).
+ */
+function rasterizeSvg(svg: string, outWidth: number) {
+  const resvg = new Resvg(svg, { fitTo: { mode: "width", value: outWidth } });
+  const pngBuffer = resvg.render().asPng();
+  return decodePngBuffer(pngBuffer);
+}
+
+describe("genuine QR decoding (SVG rasterized with resvg + jsQR)", () => {
   const base = {
     size: 750,
     qrColor: "#000000",
@@ -190,38 +187,42 @@ describe("genuine QR decoding (SVG exports, logically rasterized)", () => {
     errorCorrection: "M" as ErrorCorrectionLevel,
   };
 
-  it("decodes a short URL from SVG", () => {
-    expect(decodeSvg(generateQrSvg({ ...base, content: "https://freesubqr.vercel.app" }))).toBe(
-      "https://freesubqr.vercel.app",
-    );
+  function decodeSvg(svg: string, outWidth = 750): string {
+    const { data, width, height } = rasterizeSvg(svg, outWidth);
+    return decodeQr(data, width, height);
+  }
+
+  it("decodes a short URL from the rasterized SVG", () => {
+    const svg = generateQrSvg({ ...base, content: "https://freesubqr.vercel.app" });
+    expect(decodeSvg(svg)).toBe("https://freesubqr.vercel.app");
   });
 
-  it("decodes a 242-character URL from SVG", () => {
+  it("decodes a 242-character URL from the rasterized SVG", () => {
     const payload = "https://example.com/" + "a".repeat(222);
     expect(decodeSvg(generateQrSvg({ ...base, content: payload }))).toBe(payload);
   });
 
-  it("decodes plain text from SVG", () => {
-    expect(decodeSvg(generateQrSvg({ ...base, content: "Meet me at 7pm" }))).toBe("Meet me at 7pm");
+  it("decodes plain text from the rasterized SVG", () => {
+    const payload = "Meet me at the main entrance at 7pm";
+    expect(decodeSvg(generateQrSvg({ ...base, content: payload }))).toBe(payload);
   });
 
-  it("decodes a Wi-Fi payload from SVG", () => {
-    expect(
-      decodeSvg(generateQrSvg({ ...base, content: "WIFI:T:WPA;S:HomeNetwork;P:hunter2;;" })),
-    ).toBe("WIFI:T:WPA;S:HomeNetwork;P:hunter2;;");
+  it("decodes a Wi-Fi payload from the rasterized SVG", () => {
+    const payload = "WIFI:T:WPA;S:HomeNetwork;P:hunter2;;";
+    expect(decodeSvg(generateQrSvg({ ...base, content: payload }))).toBe(payload);
   });
 
-  it("decodes SVG at every supported output size", () => {
+  it("decodes SVGs at every supported export size", () => {
     const payload = "https://freesubqr.vercel.app";
     for (const size of [350, 750, 1500, 3000]) {
       const svg = generateQrSvg({ ...base, size, content: payload });
       expect(svg).toContain(`width="${size}"`);
       expect(svg).toContain(`height="${size}"`);
-      expect(decodeSvg(svg)).toBe(payload);
+      expect(decodeSvg(svg, size)).toBe(payload);
     }
-  });
+  }, 180_000);
 
-  it("decodes SVG at every error-correction level", () => {
+  it("decodes SVGs at every error-correction level", () => {
     const payload = "https://freesubqr.vercel.app";
     for (const ecc of ["L", "M", "Q", "H"] as const) {
       expect(decodeSvg(generateQrSvg({ ...base, errorCorrection: ecc, content: payload }))).toBe(
@@ -230,20 +231,7 @@ describe("genuine QR decoding (SVG exports, logically rasterized)", () => {
     }
   });
 
-  function makeLogo(shape: LogoConfig["shape"]): LogoConfig {
-    return {
-      enabled: true,
-      src: "data:image/png;base64,AAAA",
-      type: "upload",
-      name: "logo",
-      sizeRatio: 0.22,
-      shape,
-      paddingRatio: 0.18,
-      bgColor: "#ffffff",
-    };
-  }
-
-  it("decodes SVG with a centre logo — rounded badge", () => {
+  it("paints the centre badge and keeps the payload decodable — rounded badge", () => {
     const payload = "https://freesubqr.vercel.app";
     const svg = generateQrSvg({
       ...base,
@@ -251,10 +239,18 @@ describe("genuine QR decoding (SVG exports, logically rasterized)", () => {
       content: payload,
       logo: makeLogo("rounded"),
     });
+    // The badge image must actually reach the rasterized pixels: the centre of
+    // the export is the icon colour, not the QR dark colour.
+    const center = rasterizeSvg(svg, 750);
+    const mid = Math.floor(750 / 2);
+    const idx = (mid * 750 + mid) * 4;
+    expect([center.data[idx], center.data[idx + 1], center.data[idx + 2]]).toEqual([
+      ICON_COLOR.r, ICON_COLOR.g, ICON_COLOR.b,
+    ]);
     expect(decodeSvg(svg)).toBe(payload);
   });
 
-  it("decodes SVG with a centre logo — circular badge", () => {
+  it("paints the centre badge and keeps the payload decodable — circular badge", () => {
     const payload = "https://freesubqr.vercel.app";
     const svg = generateQrSvg({
       ...base,
@@ -262,10 +258,16 @@ describe("genuine QR decoding (SVG exports, logically rasterized)", () => {
       content: payload,
       logo: makeLogo("circle"),
     });
+    const center = rasterizeSvg(svg, 750);
+    const mid = Math.floor(750 / 2);
+    const idx = (mid * 750 + mid) * 4;
+    expect([center.data[idx], center.data[idx + 1], center.data[idx + 2]]).toEqual([
+      ICON_COLOR.r, ICON_COLOR.g, ICON_COLOR.b,
+    ]);
     expect(decodeSvg(svg)).toBe(payload);
   });
 
-  it("decodes SVG with a centre logo — square badge", () => {
+  it("paints the centre badge and keeps the payload decodable — square badge", () => {
     const payload = "https://freesubqr.vercel.app";
     const svg = generateQrSvg({
       ...base,
@@ -273,16 +275,36 @@ describe("genuine QR decoding (SVG exports, logically rasterized)", () => {
       content: payload,
       logo: makeLogo("square"),
     });
+    const center = rasterizeSvg(svg, 750);
+    const mid = Math.floor(750 / 2);
+    const idx = (mid * 750 + mid) * 4;
+    expect([center.data[idx], center.data[idx + 1], center.data[idx + 2]]).toEqual([
+      ICON_COLOR.r, ICON_COLOR.g, ICON_COLOR.b,
+    ]);
     expect(decodeSvg(svg)).toBe(payload);
   });
 
-  it("keeps the SVG viewBox scaled to the payload and quiet zone", () => {
+  it("decodes SVGs with every supported centre-logo size ratio (H)", () => {
+    const payload = "https://freesubqr.vercel.app";
+    for (const sizeRatio of [0.18, 0.22, 0.26]) {
+      const svg = generateQrSvg({
+        ...base,
+        errorCorrection: "H",
+        content: payload,
+        logo: makeLogo("rounded", sizeRatio),
+      });
+      expect(decodeSvg(svg)).toBe(payload);
+    }
+  });
+
+  it("scales the viewBox with the payload and applies a four-module quiet zone", () => {
     const short = generateQrSvg({ ...base, content: "a" });
     const long = generateQrSvg({ ...base, content: "a".repeat(400) });
     const shortBox = Number(short.match(/viewBox="0 0 (\d+) (\d+)"/)?.[1] ?? 0);
     const longBox = Number(long.match(/viewBox="0 0 (\d+) (\d+)"/)?.[1] ?? 0);
     expect(longBox).toBeGreaterThan(shortBox);
-    // quiet zone of four modules is applied to both PNG and SVG
-    expect(longBox).toBeGreaterThan(4 * 2);
+    expect(QUIET_ZONE_MODULES).toBe(4);
+    // The quiet zone is part of the viewBox on both sides.
+    expect(longBox).toBeGreaterThan(QUIET_ZONE_MODULES * 2);
   });
 });

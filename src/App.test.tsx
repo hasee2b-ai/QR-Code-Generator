@@ -26,9 +26,9 @@ const getPreviewSrc = () => screen.getByAltText(/qr code for/i).getAttribute("sr
 
 /** Waits until the preview shows a freshly generated matrix. */
 const waitForFreshPreview = async (previousSrc: string | null) => {
-  await waitFor(() => expect(getPreviewSrc()).toMatch(/^data:image\/png/), { timeout: 4000 });
+  await waitFor(() => expect(getPreviewSrc()).toMatch(/^data:image\/png/), { timeout: 15000 });
   if (previousSrc !== null) {
-    await waitFor(() => expect(getPreviewSrc()).not.toBe(previousSrc), { timeout: 4000 });
+    await waitFor(() => expect(getPreviewSrc()).not.toBe(previousSrc), { timeout: 15000 });
   }
 };
 

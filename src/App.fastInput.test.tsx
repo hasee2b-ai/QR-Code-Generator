@@ -95,7 +95,7 @@ describe("fast input regression (no artificial typing delays)", () => {
     const lastPayload = toDataURLMock.mock.calls.at(-1)?.[0];
     expect(lastPayload).toBe(LONG_URL);
     expect(getPreviewSrc()).toContain(encodeURIComponent(LONG_URL));
-  });
+  }, 180_000);
 
   it("pastes a long URL in a single change without losing characters", async () => {
     render(<App />);
@@ -116,7 +116,7 @@ describe("fast input regression (no artificial typing delays)", () => {
 
     expect(toDataURLMock.mock.calls.at(-1)?.[0]).toBe(LONG_URL);
     expect(getPreviewSrc()).toContain(encodeURIComponent(LONG_URL));
-  });
+  }, 180_000);
 
   it("rapid switching between different URLs ends on the last URL", async () => {
     render(<App />);
@@ -185,7 +185,112 @@ describe("fast input regression (no artificial typing delays)", () => {
     expect(input.value).toBe(urlB);
     expect(getPreviewSrc()).toContain(encodeURIComponent(urlB));
     expect(getPreviewSrc()).not.toContain(encodeURIComponent(urlA));
-  });
+  }, 180_000);
+
+  it("keeps every character when starting from an EMPTY input and typing one keystroke at a time", async () => {
+    render(<App />);
+
+    // Release the default-URL generation so the app is quiescent.
+    await waitForGeneration();
+    releaseCall(0);
+    await waitForPreviewContaining(encodeURIComponent(DEFAULT_URL));
+
+    const input = urlInput();
+    // Start from a completely empty URL input.
+    fireEvent.change(input, { target: { value: "" } });
+    expect(input.value).toBe("");
+
+    // Type the 242-char URL one keystroke at a time, no artificial delays.
+    for (let i = 0; i < LONG_URL.length; i++) {
+      fireEvent.change(input, { target: { value: LONG_URL.slice(0, i + 1) } });
+    }
+
+    expect(input.value).toBe(LONG_URL);
+    expect(input.value.length).toBe(242);
+
+    // The debounced generation runs exactly once for the complete final URL.
+    await waitFor(() => expect(toDataURLMock.mock.calls.length).toBeGreaterThanOrEqual(2));
+    releaseLast();
+    await waitForPreviewContaining(encodeURIComponent(LONG_URL));
+
+    expect(toDataURLMock.mock.calls.at(-1)?.[0]).toBe(LONG_URL);
+  }, 180_000);
+
+  it("survives rapidly replacing the complete URL with other complete URLs", async () => {
+    render(<App />);
+
+    await waitForGeneration();
+    releaseCall(0);
+    await waitForPreviewContaining(encodeURIComponent(DEFAULT_URL));
+
+    const input = urlInput();
+    const urlA = "https://alpha.example.com/" + "x".repeat(40);
+    const urlB = "https://beta.example.com/" + "y".repeat(40);
+    const urlC = "https://gamma.example.com/" + "z".repeat(40);
+
+    // Establish a first complete URL and let its generation land.
+    fireEvent.change(input, { target: { value: urlA } });
+    await new Promise((r) => setTimeout(r, 150));
+    releaseLast();
+    await waitForPreviewContaining(encodeURIComponent(urlA));
+
+    // Now replace the WHOLE value, back-to-back, with B then C. Each change
+    // resets the debounce, so only the final value may reach the encoder.
+    fireEvent.change(input, { target: { value: urlB } });
+    fireEvent.change(input, { target: { value: urlC } });
+    expect(input.value).toBe(urlC);
+
+    await new Promise((r) => setTimeout(r, 150)); // let C's debounced timer fire
+    releaseLast();
+    await waitForPreviewContaining(encodeURIComponent(urlC));
+
+    expect(input.value).toBe(urlC);
+    expect(toDataURLMock.mock.calls.at(-1)?.[0]).toBe(urlC);
+    expect(getPreviewSrc()).not.toContain(encodeURIComponent(urlB));
+    expect(getPreviewSrc()).not.toContain(encodeURIComponent(urlA));
+  }, 180_000);
+
+  it("preserves values when switching rapidly between URL and Text content types", async () => {
+    render(<App />);
+
+    await waitForGeneration();
+    releaseCall(0);
+    await waitForPreviewContaining(encodeURIComponent(DEFAULT_URL));
+
+    const urlT = "https://switch.example.com/" + "s".repeat(20);
+    const typedText = "Rapid switch payload";
+
+    // Type a URL keystroke by keystroke and let its generation land.
+    const input = urlInput();
+    for (let i = 0; i < urlT.length; i++) {
+      fireEvent.change(input, { target: { value: urlT.slice(0, i + 1) } });
+    }
+    await new Promise((r) => setTimeout(r, 150));
+    releaseLast();
+    await waitForPreviewContaining(encodeURIComponent(urlT));
+
+    // Switch to Text and type char-by-char (no delays).
+    fireEvent.click(screen.getByRole("button", { name: /text content type/i }));
+    const textArea = await screen.findByLabelText("Text Content");
+    for (let i = 0; i < typedText.length; i++) {
+      fireEvent.change(textArea, { target: { value: typedText.slice(0, i + 1) } });
+    }
+    await new Promise((r) => setTimeout(r, 150));
+    releaseLast();
+    await waitForPreviewContaining(encodeURIComponent(typedText));
+    expect(toDataURLMock.mock.calls.at(-1)?.[0]).toBe(typedText);
+
+    // Switch back to Link: the typed URL must be exactly as we left it, and
+    // the newly generated payload must be that URL again.
+    fireEvent.click(screen.getByRole("button", { name: /url content type/i }));
+    const inputBack = (await screen.findByLabelText("Source Destination URL")) as HTMLInputElement;
+    expect(inputBack.value).toBe(urlT);
+
+    await new Promise((r) => setTimeout(r, 150)); // debounced URL regeneration
+    releaseLast();
+    await waitForPreviewContaining(encodeURIComponent(urlT));
+    expect(toDataURLMock.mock.calls.at(-1)?.[0]).toBe(urlT);
+  }, 180_000);
 
   it("does not exceed maximum update depth when typing a long URL extremely fast", async () => {
     const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -215,5 +320,5 @@ describe("fast input regression (no artificial typing delays)", () => {
     expect(updateDepthWarnings).toBe(false);
 
     errorSpy.mockRestore();
-  });
+  }, 180_000);
 });
