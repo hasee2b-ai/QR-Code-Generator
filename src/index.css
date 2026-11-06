@@ -8,6 +8,10 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+
+  /* Personalised breakpoint: the header switches between the desktop inline
+     nav and the mobile anchor-link row here (below Tailwind's lg/1024px). */
+  --breakpoint-navbar: 995px;
 }
 
 /* Custom subtle scrollbar */

@@ -99,7 +99,7 @@ export default function SiteHeader({
         </div>
       </div>
       {/* Navigation Items (Thematic Styling) */}
-      <nav aria-label="Primary" className="hidden md:flex gap-8 text-xs font-semibold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest">
+      <nav aria-label="Primary" className="hidden navbar:flex max-navbar:hidden gap-8 text-xs font-semibold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest">
         {navLinks.map((link) => (
           <a
             key={link.href}
@@ -177,7 +177,7 @@ export default function SiteHeader({
       {/* Mobile anchor-link row (no horizontal nav on small screens) */}
       <nav
         aria-label="Page sections"
-        className="md:hidden -mx-6 sm:-mx-12 border-t border-neutral-900/10 dark:border-neutral-800 px-6 sm:px-12 py-2 flex flex-wrap gap-x-5 gap-y-1 text-xs font-semibold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest transition-colors"
+        className="max-navbar:hidden -mx-6 sm:-mx-12 border-t border-neutral-900/10 dark:border-neutral-800 px-6 sm:px-12 py-2 flex flex-wrap gap-x-5 gap-y-1 text-xs font-semibold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest transition-colors"
       >
         <a href="#generator" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Generator</a>
         <a href="#features" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Features</a>
