@@ -10,7 +10,7 @@
   --font-mono: "JetBrains Mono", monospace;
 
   /* Personalised breakpoint: the header switches between the desktop inline
-     nav and the mobile anchor-link row here (below Tailwind's lg/1024px). */
+     nav and the mobile hamburger menu at Tailwind's lg/1024px. */
   --breakpoint-navbar: 995px;
 }
 

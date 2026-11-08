@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { History, Sun, Moon } from "lucide-react";
+import { History, Sun, Moon, Menu, X } from "lucide-react";
 
 interface SiteHeaderProps {
   theme: "light" | "dark";
@@ -18,6 +18,7 @@ export default function SiteHeader({
   onOpenHistory,
 }: SiteHeaderProps) {
   const [activeSection, setActiveSection] = useState("generator");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -171,20 +172,47 @@ export default function SiteHeader({
           </button>
         </div>
 
+        {/* Mobile Hamburger Menu Toggle */}
+        <button
+          id="mobile-menu-toggle-button"
+          type="button"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-menu"
+          aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+          className="max-navbar:flex navbar:hidden items-center justify-center w-9 h-9 border-2 border-neutral-900 dark:border-neutral-200 bg-white dark:bg-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.7)] text-neutral-900 dark:text-white hover:bg-neutral-50 dark:hover:bg-neutral-800 active:translate-x-[1px] active:translate-y-[1px] cursor-pointer select-none transition-all rounded-none"
+        >
+          {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        </button>
+
       </div>
       </div>
 
-      {/* Mobile anchor-link row (no horizontal nav on small screens) */}
-      <nav
-        aria-label="Page sections"
-        className="max-navbar:hidden -mx-6 sm:-mx-12 border-t border-neutral-900/10 dark:border-neutral-800 px-6 sm:px-12 py-2 flex flex-wrap gap-x-5 gap-y-1 text-xs font-semibold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest transition-colors"
-      >
-        <a href="#generator" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Generator</a>
-        <a href="#features" className="hover:text-neutral-900 dark:hover:text-white transition-colors">Features</a>
-        <a href="#how-it-works" className="hover:text-neutral-900 dark:hover:text-white transition-colors">How it works</a>
-        <a href="#faq" className="hover:text-neutral-900 dark:hover:text-white transition-colors">FAQ</a>
-      </nav>
-
+      {/* Mobile navigation menu (collapses/expands via hamburger, hidden on desktop) */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.nav
+            id="mobile-menu"
+            aria-label="Primary"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0, transition: { duration: 0.2 } }}
+            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            className="flex flex-col navbar:hidden overflow-hidden border-t border-neutral-900/10 dark:border-neutral-800 px-6 py-3 gap-3 text-xs font-semibold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest bg-white dark:bg-neutral-950 transition-colors"
+          >
+            {navLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={isActive(link.href) ? "text-neutral-900 dark:text-white border-b-2 border-neutral-900 dark:border-white pb-1" : "hover:text-neutral-900 dark:hover:text-white pb-1"}
+              >
+                {link.label}
+              </a>
+            ))}
+          </motion.nav>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

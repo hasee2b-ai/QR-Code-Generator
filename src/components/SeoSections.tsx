@@ -28,19 +28,29 @@ export default function SeoSections() {
             no account, no watermark, no upload.
           </p>
 
-          <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 list-none p-0">
+          {/* Mobile-only discovery hint for the snap carousel */}
+          <span
+            aria-hidden="true"
+            className="sm:hidden block text-[11px] font-mono font-bold uppercase tracking-widest text-neutral-700 dark:text-neutral-400 mb-3"
+          >
+            01–06 · Swipe →
+          </span>
+
+          {/* Mobile: edge-to-edge horizontal snap carousel with peeking next card.
+              sm and up: unchanged 2/3-column grid. */}
+          <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 list-none p-0 max-sm:flex max-sm:gap-4 max-sm:overflow-x-auto max-sm:snap-x max-sm:snap-mandatory max-sm:scroll-px-6 max-sm:-mx-6 max-sm:px-6 max-sm:mb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {FEATURES.map((feature) => (
               <li
                 key={feature.id}
-                className="border-2 border-neutral-900 dark:border-neutral-100 bg-white dark:bg-neutral-900 p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.7)]"
+                className="border-2 border-neutral-900 dark:border-neutral-100 bg-white dark:bg-neutral-900 max-sm:p-5 sm:p-6 max-sm:w-[80%] max-sm:flex-none max-sm:shrink-0 max-sm:snap-start shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.7)]"
               >
-                <span className="block text-xs font-mono font-bold text-neutral-700 dark:text-neutral-400 tracking-widest mb-3">
+                <span className="block text-xs font-mono font-bold text-neutral-700 dark:text-neutral-400 tracking-widest mb-3 max-sm:mb-4">
                   {feature.id} //
                 </span>
-                <h3 className="text-sm font-black uppercase tracking-wide text-neutral-900 dark:text-white mb-2 font-display">
+                <h3 className="text-sm font-black uppercase tracking-wide text-neutral-900 dark:text-white mb-2 max-sm:mb-3 font-display max-sm:text-base">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-neutral-700 dark:text-neutral-400 leading-relaxed">
+                <p className="text-sm text-neutral-700 dark:text-neutral-400 leading-relaxed max-sm:text-[15px] max-sm:leading-[1.65]">
                   {feature.body}
                 </p>
               </li>
