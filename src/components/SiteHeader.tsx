@@ -55,6 +55,32 @@ export default function SiteHeader({
     return activeSection === id;
   };
 
+  const mobileMenuVariants = {
+    closed: {
+      height: 0,
+      opacity: 0,
+      transition: {
+        height: { duration: 0.22, ease: [0.45, 0, 0.55, 0.2] },
+        opacity: { duration: 0.12, delay: 0.06, ease: "easeIn" },
+      },
+    },
+    open: {
+      height: "auto",
+      opacity: 1,
+      transition: {
+        height: { duration: 0.32, ease: [0.32, 0.72, 0, 1] },
+        opacity: { duration: 0.2, ease: "easeOut" },
+        staggerChildren: 0.045,
+        delayChildren: 0.12,
+      },
+    },
+  };
+
+  const mobileMenuItemVariants = {
+    closed: { opacity: 0, y: 8, transition: { duration: 0.14, ease: "easeIn" } },
+    open: { opacity: 1, y: 0, transition: { duration: 0.22, ease: "easeOut" } },
+  };
+
   return (
     <header className="relative border-b border-neutral-900/10 dark:border-neutral-800 flex flex-col px-6 sm:px-12 bg-white dark:bg-neutral-950 sticky top-0 lg:static z-40 flex-shrink-0 transition-colors">
       {/* Subtle Loading Progress Bar across Header */}
@@ -113,14 +139,14 @@ export default function SiteHeader({
       </nav>
 
       <div className="flex items-center gap-3 sm:gap-4">
-        {/* History Drawer Toggle Button */}
+        {/* History Drawer Toggle Button (hidden on small mobile — lives in the hamburger menu there) */}
         <button
           id="history-toggle-button"
           type="button"
           onClick={onOpenHistory}
           title={`Open Recent QR History (${historyCount})`}
           aria-label={`Open Recent QR History (${historyCount})`}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer select-none rounded-none border-2 border-neutral-900 dark:border-neutral-200 bg-white dark:bg-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.7)] text-neutral-900 dark:text-white hover:bg-neutral-50 dark:hover:bg-neutral-800 active:translate-x-[1px] active:translate-y-[1px]"
+          className="max-sm:hidden flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer select-none rounded-none border-2 border-neutral-900 dark:border-neutral-200 bg-white dark:bg-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.7)] text-neutral-900 dark:text-white hover:bg-neutral-50 dark:hover:bg-neutral-800 active:translate-x-[1px] active:translate-y-[1px]"
         >
           <History className="w-3.5 h-3.5" />
           <span className="hidden xs:inline sm:inline">History</span>
@@ -132,10 +158,10 @@ export default function SiteHeader({
           </span>
         </button>
 
-        {/* Dark and Light Theme Buttons */}
+        {/* Dark and Light Theme Buttons (hidden on small mobile — lives in the hamburger menu there) */}
         <div
           id="theme-switcher-control"
-          className="flex items-center border-2 border-neutral-900 dark:border-neutral-200 bg-white dark:bg-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.7)] p-0.5"
+          className="max-sm:hidden flex items-center border-2 border-neutral-900 dark:border-neutral-200 bg-white dark:bg-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.7)] p-0.5"
           role="group"
           aria-label="Theme mode switcher"
         >
@@ -194,22 +220,75 @@ export default function SiteHeader({
           <motion.nav
             id="mobile-menu"
             aria-label="Primary"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0, transition: { duration: 0.2 } }}
-            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+            initial="closed"
+            animate="open"
+            exit="closed"
+            variants={mobileMenuVariants}
             className="flex flex-col navbar:hidden overflow-hidden border-t border-neutral-900/10 dark:border-neutral-800 px-6 py-3 gap-3 text-xs font-semibold text-neutral-700 dark:text-neutral-400 uppercase tracking-widest bg-white dark:bg-neutral-950 transition-colors"
           >
             {navLinks.map((link) => (
-              <a
+              <motion.a
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
+                variants={mobileMenuItemVariants}
                 className={isActive(link.href) ? "text-neutral-900 dark:text-white border-b-2 border-neutral-900 dark:border-white pb-1" : "hover:text-neutral-900 dark:hover:text-white pb-1"}
               >
                 {link.label}
-              </a>
+              </motion.a>
             ))}
+
+            {/* Small-mobile-only controls: History + theme (hidden from the header row at these sizes) */}
+            <motion.div
+              variants={mobileMenuItemVariants}
+              className="sm:hidden flex flex-col gap-4 border-t border-neutral-900/10 dark:border-neutral-800 mt-3 pt-4"
+            >
+              <button
+                type="button"
+                onClick={() => { onOpenHistory(); setMobileMenuOpen(false); }}
+                aria-label={`Open Recent QR History (${historyCount})`}
+                className="flex items-center justify-center gap-1.5 w-full px-2.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer select-none rounded-none border-2 border-neutral-900 dark:border-neutral-200 bg-white dark:bg-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.7)] text-neutral-900 dark:text-white hover:bg-neutral-50 dark:hover:bg-neutral-800 active:translate-x-[1px] active:translate-y-[1px]"
+              >
+                <History className="w-3.5 h-3.5" />
+                <span>History ({historyCount})</span>
+              </button>
+
+              <div
+                className="flex items-center w-full border-2 border-neutral-900 dark:border-neutral-200 bg-white dark:bg-neutral-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.7)] p-0.5"
+                role="group"
+                aria-label="Theme mode switcher"
+              >
+                <button
+                  type="button"
+                  onClick={() => onThemeChange("light")}
+                  aria-pressed={theme === "light"}
+                  title="Switch to Light theme"
+                  className={`flex flex-1 items-center justify-center gap-1.5 px-2.5 py-1 text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer select-none rounded-none ${
+                    theme === "light"
+                      ? "bg-neutral-900 text-white shadow-[1px_1px_0px_0px_rgba(0,0,0,0.4)]"
+                      : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+                  }`}
+                >
+                  <Sun className="w-3.5 h-3.5" />
+                  <span>Light</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onThemeChange("dark")}
+                  aria-pressed={theme === "dark"}
+                  title="Switch to Dark theme"
+                  className={`flex flex-1 items-center justify-center gap-1.5 px-2.5 py-1 text-xs font-mono font-bold uppercase tracking-wider transition-all cursor-pointer select-none rounded-none ${
+                    theme === "dark"
+                      ? "bg-white text-neutral-900 shadow-[1px_1px_0px_0px_rgba(255,255,255,0.4)]"
+                      : "text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white"
+                  }`}
+                >
+                  <Moon className="w-3.5 h-3.5" />
+                  <span>Dark</span>
+                </button>
+              </div>
+            </motion.div>
           </motion.nav>
         )}
       </AnimatePresence>
